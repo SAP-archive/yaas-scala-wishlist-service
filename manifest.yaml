@@ -1,0 +1,6 @@
+---
+applications:
+- name: scala-wishlist
+  buildpack: java_buildpack
+  path: ./target/universal/scala-wishlist-0.1.0-SNAPSHOT.zip
+  
