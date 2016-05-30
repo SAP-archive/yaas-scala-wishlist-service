@@ -12,6 +12,27 @@ src_managed/
 project/boot/
 project/plugins/project/
 
-# Scala-IDE specific
+# Eclipse
+.cache
+.classpath
+.project
 .scala_dependencies
-.worksheet
+.settings
+.target/
+.worksheet/
+*.sc
+
+# IntelliJ
+.idea/
+*.idea
+out/
+*.iml
+*.ipr
+*.iws
+
+# ENSIME
+.ensime
+.ensime_lucene/
+
+# Mac
+.DS_Store
