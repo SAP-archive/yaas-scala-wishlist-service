@@ -21,6 +21,7 @@ project/plugins/project/
 .target/
 .worksheet/
 *.sc
+.cache-main
 
 # IntelliJ
 .idea/
