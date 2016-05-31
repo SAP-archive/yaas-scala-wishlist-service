@@ -21,15 +21,13 @@ class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionCont
   
   def getToken: Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
-    val jsonBody: JsValue = JsObject(Seq("grant_type" -> JsString(GRANT_TYPE),
-                                         "client_id" -> JsString("Vt6BP2AsBGZsWH2UIe9rEi54d1MWWKUC"),
-                                         "client_secret" -> JsString("1u95IqAhTXP7rnmG"),
-                                         "scope" -> JsString("")))
-    
+    val body = Map("grant_type" -> Seq(GRANT_TYPE),
+                                         "client_id" -> Seq("Vt6BP2AsBGZsWH2UIe9rEi54d1MWWKUC"),
+                                         "client_secret" -> Seq("1u95IqAhTXP7rnmG"),
+                                         "scope" -> Seq(""))
     ws.url(BASE_URI + "/token")
         .withHeaders(hdrs)
-        .withBody(Json.toJson(jsonBody))
-        .get()
+        .post(body)
         .map(
           response => 
             response.status match {

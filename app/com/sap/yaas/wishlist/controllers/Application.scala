@@ -8,7 +8,7 @@ import play.api.libs.json.{JsError, JsResult, JsSuccess, Json}
 import play.api.mvc._
 import com.sap.yaas.wishlist.oauth.OAuthTokenService
 import scala.util.{Failure, Success}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{Future, ExecutionContext}
 import com.sap.yaas.wishlist.service.RemoteServiceException
 
 
@@ -17,14 +17,13 @@ import com.sap.yaas.wishlist.service.RemoteServiceException
   */
 class Application @Inject() (oauthClient: OAuthTokenService)(implicit context: ExecutionContext) extends Controller {
 
-  def list = Action { request =>
-    val token = oauthClient.getToken.onComplete {
-      case Success(value) => 
-        value.access_token
-      case Failure(e) =>
-        throw new RemoteServiceException("Error during token request, please try again.")
-    }
-    Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token)
+  def list = Action.async { request =>
+    oauthClient.getToken.map(token =>
+      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
+          case _ =>
+            throw new RemoteServiceException("Error during token request, please try again.")
+          }
+      )
   }
 
   def update = Action(BodyParsers.parse.json) { request =>
