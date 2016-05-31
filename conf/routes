@@ -3,6 +3,6 @@
 # ~~~~
 
 GET         /        com.sap.yaas.wishlist.controllers.Application.list()
-POST        /        com.sap.yaas.wishlist.controllers.Application.create(token: String)
+POST        /        com.sap.yaas.wishlist.controllers.Application.create()
 PUT         /        com.sap.yaas.wishlist.controllers.Application.update()
 

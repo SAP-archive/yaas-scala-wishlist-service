@@ -12,31 +12,37 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 
-class Application @Inject() (documentClient: DocumentClient,
-                             oauthClient: OAuthTokenService,
-                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
+class Application @Inject()(documentClient: DocumentClient,
+                            oauthClient: OAuthTokenService,
+                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = Action.async { request =>
     oauthClient.getToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get).map(token =>
       Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
-          case _ =>
-            throw new RemoteServiceException("Error during token request, please try again.")
-          }
-      )
+      case _ =>
+        throw new RemoteServiceException("Error during token request, please try again.")
+    }
+    )
   }
 
-  def create(token: String) = Action.async(BodyParsers.parse.json) { request =>
+  def create() = Action.async(BodyParsers.parse.json) { request =>
     val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
     jsresult match {
       case wishlistOpt: JsSuccess[Wishlist] =>
         val yaasAwareParameters: YaasAwareParameters = getYaasAwareParameters(request)
         println("wishlist: " + jsresult.get)
-        documentClient.create(
-          yaasAwareParameters, wishlistOpt.get, token).map(
-          response => Ok(Json.toJson(response))
-        ).recover({
+
+        (for {
+          token <- oauthClient.getToken(config.getString("yaas.security.client_id").get,
+                    config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+          result <- documentClient.create(
+            yaasAwareParameters, wishlistOpt.get, token.access_token).map(
+            response => Ok(Json.toJson(response))
+          )
+        } yield result)
+          .recover({
           case e: DocumentExistsException => Conflict
-          case e:Exception =>
+          case e: Exception =>
             e.printStackTrace()
             InternalServerError(e.getMessage)
         })

@@ -2,16 +2,12 @@ package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
 
-import play.api.mvc._
-import play.api.libs.ws.WSClient
-import play.api.libs.json._
-import scala.concurrent.Future
-import scala.concurrent.ExecutionContext
 import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
-
-import play.api.http.Status._
-import org.apache.http.ParseException
 import com.sap.yaas.wishlist.service.RemoteServiceException
+import play.api.http.Status._
+import play.api.libs.ws.WSClient
+
+import scala.concurrent.{ExecutionContext, Future}
 
 class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionContext) {
   
@@ -19,12 +15,12 @@ class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionCont
   val GRANT_TYPE = "client_credentials"
   
   
-  def getToken(clientId: String, clientSecret: String): Future[OAuthToken] = {
+  def getToken(clientId: String, clientSecret: String, scopes:Seq[String] = Seq("")): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
     val body = Map("grant_type" -> Seq(GRANT_TYPE),
                                          "client_id" -> Seq(clientId),
                                          "client_secret" -> Seq(clientSecret),
-                                         "scope" -> Seq(""))
+                                         "scope" -> scopes)
     ws.url(BASE_URI + "/token")
         .withHeaders(hdrs)
         .post(body)
@@ -33,13 +29,13 @@ class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionCont
             response.status match {
               case OK =>
                 (response.json).validate[OAuthToken]
-                    .fold(_ => throw new ParseException("parse json failed on success"),
+                    .fold(_ => throw new Exception("parse json failed on success"),
                            s => s)
               case INTERNAL_SERVER_ERROR =>
                 throw new RemoteServiceException("Something went wrong")
               case default =>
                 (response.json).validate[OAuthTokenError]
-                    .fold(_ => throw new ParseException("parse json failed on failure"),
+                    .fold(_ => throw new Exception("parse json failed on failure"),
                            s => throw new TokenErrorException(s))
             }
         )
