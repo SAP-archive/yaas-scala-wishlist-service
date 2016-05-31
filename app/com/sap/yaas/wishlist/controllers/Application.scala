@@ -11,6 +11,7 @@ import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.sap.yaas.wishlist.security.ViewActionFilter
 
 /**
   * Created by lutzh on 30.05.16.
@@ -21,11 +22,11 @@ class Application @Inject() (documentClient: DocumentClient,
 
   def list = Action.async { request =>
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
-      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
+      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
+    ).recover({
       case _ =>
         throw new RemoteServiceException("Error during token request, please try again.")
-    }
-    )
+    })
   }
 
   def create() = Action.async(BodyParsers.parse.json) { request =>
