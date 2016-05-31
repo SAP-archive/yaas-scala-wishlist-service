@@ -15,7 +15,7 @@ import java.net.URI
 
 import play.api.libs.json.Json
 
-case class ResourceLocation(id: String, uri: String)
+case class ResourceLocation(id: String, link: String)
 
 //TODO: Json format for java.net.URI
 

@@ -17,12 +17,12 @@ import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParamet
 import play.api.Configuration
 import play.api.libs.json.{JsError, JsSuccess, Json}
 import play.api.libs.ws._
+import play.api.http.Status._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 class DocumentClient @Inject()(ws: WSClient, config: Configuration)
                               (implicit context: ExecutionContext) {
-
 
   val client: String = config.getString("yaas.client").get
 
@@ -30,13 +30,14 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
              wishlist: Wishlist, token: String): Future[ResourceLocation] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
+     client,
       "data",
       DocumentClient.WISHLIST_PATH,
       wishlist.id
     ).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders("hybris-tenant" -> yaasAwareParameters.hybrisTenant,
-        "hybris-requestId" -> yaasAwareParameters.hybrisRequestId,
+        "hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
         "hybris-hop" -> yaasAwareParameters.hybrisHop.toString,
         "Authorization" -> ("Bearer " + token)
         // ContentType set by Play
@@ -45,13 +46,13 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
     val futureResponse: Future[WSResponse] = request.post(Json.toJson(wishlist))
     futureResponse map { response =>
       response.status match {
-        case 201 => // O
+        case CREATED => // O
           response.json.validate[ResourceLocation] match {
             case s: JsSuccess[ResourceLocation] => s.get
-            case _ => throw new RuntimeException("Could not parse result:" + response.json)
+            case _ => throw new Exception("Could not parse result:" + response.json)
           }
-        case 409 => throw new DocumentExistsException(path)
-        case _  => throw new RuntimeException("Unexpected response: " + response)
+        case CONFLICT => throw new DocumentExistsException("Wishlist exists", path)
+        case _  => throw new Exception("Unexpected response: " + response)
 
       }
     }
