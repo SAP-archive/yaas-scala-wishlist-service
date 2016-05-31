@@ -9,18 +9,17 @@ import play.api.libs.ws.WSClient
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionContext) {
+class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionContext) extends OAuthTokenProvider {
   
   val BASE_URI = "https://api.yaas.io/hybris/oauth2/v1" 
   val GRANT_TYPE = "client_credentials"
   
-  
-  def getToken(clientId: String, clientSecret: String, scopes:Seq[String] = Seq("")): Future[OAuthToken] = {
+  def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
-    val body = Map("grant_type" -> Seq(GRANT_TYPE),
-                                         "client_id" -> Seq(clientId),
-                                         "client_secret" -> Seq(clientSecret),
-                                         "scope" -> scopes)
+    var body = Map("grant_type" -> Seq(GRANT_TYPE),
+                   "client_id" -> Seq(clientId),
+                   "client_secret" -> Seq(clientSecret),
+                   "scope" -> scopes)
     ws.url(BASE_URI + "/token")
         .withHeaders(hdrs)
         .post(body)
@@ -40,4 +39,8 @@ class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionCont
             }
         )
     }
+  
+  def invalidateToken = {
+    
+  }
 }

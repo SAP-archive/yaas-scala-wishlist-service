@@ -6,18 +6,21 @@ import com.sap.yaas.wishlist.model.{Wishlist, WishlistItem, YaasAwareParameters}
 import com.sap.yaas.wishlist.oauth.OAuthTokenService
 import com.sap.yaas.wishlist.service.RemoteServiceException
 import play.api.Configuration
+import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-
-class Application @Inject()(documentClient: DocumentClient,
-                            oauthClient: OAuthTokenService,
-                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
+/**
+  * Created by lutzh on 30.05.16.
+  */
+class Application @Inject() (documentClient: DocumentClient,
+                             oauthClient: OAuthTokenCacheWrapper,
+                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = Action.async { request =>
-    oauthClient.getToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get).map(token =>
+    oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
       Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
       case _ =>
         throw new RemoteServiceException("Error during token request, please try again.")
@@ -33,7 +36,7 @@ class Application @Inject()(documentClient: DocumentClient,
         println("wishlist: " + jsresult.get)
 
         (for {
-          token <- oauthClient.getToken(config.getString("yaas.security.client_id").get,
+          token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
                     config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
           result <- documentClient.create(
             yaasAwareParameters, wishlistOpt.get, token.access_token).map(

@@ -13,4 +13,4 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
   .settings(commonSettings: _*)
   .settings(// Enable injected generator
     routesGenerator := InjectedRoutesGenerator,
-    libraryDependencies ++= Seq(ws))
+    libraryDependencies ++= Seq(ws, cache))
