@@ -19,7 +19,7 @@ import play.api.Configuration
 class Application @Inject() (oauthClient: OAuthTokenService, config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = Action.async { request =>
-    oauthClient.getToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get).map(token =>
+    oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, "hybris.tenant=altoconproj").map(token =>
       Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
           case _ =>
             throw new RemoteServiceException("Error during token request, please try again.")
