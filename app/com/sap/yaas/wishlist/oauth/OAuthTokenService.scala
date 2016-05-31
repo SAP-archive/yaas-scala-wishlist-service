@@ -19,11 +19,11 @@ class OAuthTokenService @Inject() (ws: WSClient)(implicit context: ExecutionCont
   val GRANT_TYPE = "client_credentials"
   
   
-  def getToken: Future[OAuthToken] = {
+  def getToken(clientId: String, clientSecret: String): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
     val body = Map("grant_type" -> Seq(GRANT_TYPE),
-                                         "client_id" -> Seq("Vt6BP2AsBGZsWH2UIe9rEi54d1MWWKUC"),
-                                         "client_secret" -> Seq("1u95IqAhTXP7rnmG"),
+                                         "client_id" -> Seq(clientId),
+                                         "client_secret" -> Seq(clientSecret),
                                          "scope" -> Seq(""))
     ws.url(BASE_URI + "/token")
         .withHeaders(hdrs)
