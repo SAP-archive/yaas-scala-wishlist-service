@@ -11,12 +11,13 @@ import scala.util.{Failure, Success}
 import scala.concurrent.{Future, ExecutionContext}
 import com.sap.yaas.wishlist.service.RemoteServiceException
 import play.api.Configuration
+import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 
 
 /**
   * Created by lutzh on 30.05.16.
   */
-class Application @Inject() (oauthClient: OAuthTokenService, config: Configuration)(implicit context: ExecutionContext) extends Controller {
+class Application @Inject() (oauthClient: OAuthTokenCacheWrapper, config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = Action.async { request =>
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, "hybris.tenant=altoconproj").map(token =>

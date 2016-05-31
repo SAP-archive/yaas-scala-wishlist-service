@@ -7,7 +7,7 @@ import scala.concurrent.ExecutionContext
 import scala.concurrent.Future
 import play.api.cache.CacheApi
 
-class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenProvider,
+class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
                                         cache: CacheApi)
                                        (implicit context: ExecutionContext)
                                        extends OAuthTokenProvider {
