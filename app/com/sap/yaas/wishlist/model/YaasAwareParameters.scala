@@ -11,5 +11,8 @@
  */
 package com.sap.yaas.wishlist.model
 
-case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String, hybrisUser: String,
-                               hybrisScopes: String, hybrisRequestId: String, hybrisHop: Int = 1)
+case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
+                               hybrisScopes: String,
+                               hybrisUser: Option[String],
+                               hybrisRequestId: Option[String],
+                               hybrisHop: Int = 1)
