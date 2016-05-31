@@ -15,19 +15,15 @@ class Application extends Controller {
     Ok(Json.toJson(WishlistItem.dummyItem))
   }
 
-  def update = Action { request =>
-    request.body.asJson match {
-      case Some(jsvalue) =>
-        val jsresult: JsResult[WishlistItem] = jsvalue.validate[WishlistItem]
+  def update = Action(BodyParsers.parse.json) { request =>
+        val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
         jsresult match {
-          case _: JsSuccess[WishlistItem] => println("wishlist item: " + jsresult.get)
-          case error: JsError => println("Errors: " + JsError.toJson(error).toString())
+          case _: JsSuccess[WishlistItem] =>
+            println("wishlist item: " + jsresult.get)
+            Ok
+          case error: JsError =>
+            println("Errors: " + JsError.toJson(error).toString())
+            BadRequest
         }
-        Ok("")
-      // invalid request body format
-      case None =>
-        println("Bad Request")
-        BadRequest
     }
-  }
 }
