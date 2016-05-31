@@ -3,20 +3,26 @@ package com.sap.yaas.wishlist.controllers
 import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.{DocumentClient, DocumentExistsException}
 import com.sap.yaas.wishlist.model.{Wishlist, WishlistItem, YaasAwareParameters}
-import play.api.libs.json._
+import com.sap.yaas.wishlist.oauth.OAuthTokenService
+import com.sap.yaas.wishlist.service.RemoteServiceException
+import play.api.Configuration
+import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 
-/**
-  * Created by lutzh on 30.05.16.
-  */
-class Application @Inject()(documentClient: DocumentClient)
-                           (implicit executionContext: ExecutionContext) extends Controller {
+class Application @Inject() (documentClient: DocumentClient,
+                             oauthClient: OAuthTokenService,
+                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
-  def list = Action { request =>
-    Ok(Json.toJson(WishlistItem.dummyItem))
+  def list = Action.async { request =>
+    oauthClient.getToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get).map(token =>
+      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)).recover({
+          case _ =>
+            throw new RemoteServiceException("Error during token request, please try again.")
+          }
+      )
   }
 
   def create(token: String) = Action.async(BodyParsers.parse.json) { request =>
