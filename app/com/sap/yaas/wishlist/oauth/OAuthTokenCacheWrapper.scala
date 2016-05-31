@@ -12,13 +12,13 @@ class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
                                        (implicit context: ExecutionContext)
                                        extends OAuthTokenProvider {
   
-  def acquireToken(clientId: String, clientSecret: String, scope: String): Future[OAuthToken] = {
-    cache.get[OAuthToken](scope) match {
+  def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
+    cache.get[OAuthToken](scopes.mkString(" ")) match {
       case Some(token) =>
         Future.successful(token)
       case None =>
-        wrappedTokenService.acquireToken(clientId, clientSecret, scope).map { token =>
-          cache.set(scope, token)
+        wrappedTokenService.acquireToken(clientId, clientSecret, scopes).map { token =>
+          cache.set(scopes.mkString(" "), token)
           token
         }
       

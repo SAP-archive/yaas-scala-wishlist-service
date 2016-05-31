@@ -11,4 +11,4 @@
  */
 package com.sap.yaas.wishlist.document
 
-class DocumentExistsException(val path: String) extends RuntimeException
+class DocumentExistsException(val message: String, val path: String) extends Exception(message)
