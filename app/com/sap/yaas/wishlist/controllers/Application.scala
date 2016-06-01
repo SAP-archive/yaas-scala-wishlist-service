@@ -27,7 +27,7 @@ class Application @Inject() (documentClient: DocumentClient,
 
   def list = (GlobalHeaderPropagateAction andThen ViewActionFilter).async { request =>
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
-      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token).withHeaders(request.yaasAwareParameters)
+      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
     ).recover({
       case _ =>
         throw new RemoteServiceException("Error during token request, please try again.")
