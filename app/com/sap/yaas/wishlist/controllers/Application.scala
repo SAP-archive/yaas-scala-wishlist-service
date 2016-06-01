@@ -12,6 +12,8 @@ import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 import com.sap.yaas.wishlist.security.ViewActionFilter
+import com.sap.yaas.wishlist.security.ManageActionFilter
+import play.api.cache.CacheApi
 
 /**
   * Created by lutzh on 30.05.16.
@@ -20,7 +22,7 @@ class Application @Inject() (documentClient: DocumentClient,
                              oauthClient: OAuthTokenCacheWrapper,
                              config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
-  def list = Action.async { request =>
+  def list = (Action andThen ViewActionFilter).async { request =>
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
       Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
     ).recover({
@@ -29,7 +31,7 @@ class Application @Inject() (documentClient: DocumentClient,
     })
   }
 
-  def create() = Action.async(BodyParsers.parse.json) { request =>
+  def create() = (Action andThen ManageActionFilter).async(BodyParsers.parse.json) { request =>
     val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
     jsresult match {
       case wishlistOpt: JsSuccess[Wishlist] =>
@@ -67,7 +69,7 @@ class Application @Inject() (documentClient: DocumentClient,
       request.headers.get("hybris-hop").getOrElse("1").toInt)
   }
 
-  def update = Action(BodyParsers.parse.json) { request =>
+  def update = (Action andThen ManageActionFilter)(BodyParsers.parse.json) { request =>
     val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
     jsresult match {
       case _: JsSuccess[WishlistItem] =>

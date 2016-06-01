@@ -22,6 +22,7 @@ project/plugins/project/
 .worksheet/
 *.sc
 .cache-main
+.cache-tests
 
 # IntelliJ
 .idea/
