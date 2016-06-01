@@ -36,8 +36,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
       wishlist.id
     ).mkString("/")
     val request: WSRequest = ws.url(path)
-      .withHeaders("hybris-tenant" -> yaasAwareParameters.hybrisTenant,
-        "hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
         "hybris-hop" -> yaasAwareParameters.hybrisHop.toString,
         "Authorization" -> ("Bearer " + token)
         // ContentType set by Play
