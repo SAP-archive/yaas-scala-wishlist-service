@@ -17,7 +17,7 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.sap.yaas.wishlist.controllers.ApplicationSpec._
-import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, WishlistItem}
+import com.sap.yaas.wishlist.model.{OAuthToken, ResourceLocation, Wishlist, WishlistItem}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Inside._
 import org.scalatestplus.play._
@@ -33,15 +33,27 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
 
   override def beforeAll() = {
-    sys.props ++= Map(YAAS_DOCUMENT_URL -> s"http://localhost:$WIREMOCK_PORT",
-      YAAS_CLIENT -> TEST_CLIENT)
+    val wiremockUrl = s"http://localhost:$WIREMOCK_PORT"
+    sys.props ++= Map(YAAS_DOCUMENT_URL -> wiremockUrl,
+      YAAS_SECURITY_OAUTH_URL -> wiremockUrl,
+      YAAS_CLIENT -> TEST_CLIENT
+    )
     wireMockServer.start()
     configureFor("localhost", WIREMOCK_PORT)
+    def stubOauthService(): Unit = {
+      stubFor(post(urlEqualTo("/token"))
+        .willReturn(
+          aResponse().withStatus(OK).withBody(Json.toJson(
+            new OAuthToken("", TEST_TOKEN, TEST_TOKEN_EXPIRY, "")).toString)
+        ))
+    }
+    stubOauthService()
     super.beforeAll()
   }
 
   override def afterAll() = {
     sys.props -= YAAS_DOCUMENT_URL
+    sys.props -= YAAS_SECURITY_OAUTH_URL
     sys.props -= YAAS_CLIENT
     wireMockServer.stop()
     super.afterAll()
@@ -51,10 +63,12 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
     "create a wishlist in document service propagating the hybris-requestId" in {
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+
       stubFor(post(urlEqualTo(path))
         .withHeader(CONTENT_TYPE_HEADER, containing(CONTENT_TYPE_JSON))
         .withHeader("hybris-requestId", equalTo(TEST_REQUEST_ID))
         .withHeader("hybris-hop", equalTo(TEST_HOP))
+        .withHeader("Authorization", containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
             .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JSON)
@@ -141,6 +155,7 @@ object ApplicationSpec {
   val CONTENT_TYPE_HEADER = "Content-Type"
   val CONTENT_TYPE_JSON = "application/json"
   val YAAS_DOCUMENT_URL = "yaas.document.url"
+  val YAAS_SECURITY_OAUTH_URL = "yaas.security.oauth_url"
   val YAAS_CLIENT = "yaas.client"
 
   val WIREMOCK_PORT = 8089
@@ -151,5 +166,7 @@ object ApplicationSpec {
   val TEST_LINK = "http://myLink.com"
   val TEST_REQUEST_ID = "516-3"
   val TEST_HOP = "4"
+  val TEST_TOKEN = "token"
+  val TEST_TOKEN_EXPIRY = 3600
 
 }
