@@ -14,6 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import com.sap.yaas.wishlist.security.ViewActionFilter
 import com.sap.yaas.wishlist.security.ManageActionFilter
 import play.api.cache.CacheApi
+import play.api.Logger
 
 /**
   * Created by lutzh on 30.05.16.
@@ -36,7 +37,7 @@ class Application @Inject() (documentClient: DocumentClient,
     jsresult match {
       case wishlistOpt: JsSuccess[Wishlist] =>
         val yaasAwareParameters: YaasAwareParameters = getYaasAwareParameters(request)
-        println("wishlist: " + jsresult.get)
+        Logger.debug("wishlist: " + jsresult.get)
 
         (for {
           token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
@@ -49,12 +50,12 @@ class Application @Inject() (documentClient: DocumentClient,
           .recover({
           case e: DocumentExistsException => Conflict
           case e: Exception =>
-            e.printStackTrace()
+            Logger.error("Unexpected error while creating a wishlist", e)
             InternalServerError(e.getMessage)
         })
       case error: JsError =>
         println("Errors: " + JsError.toJson(error).toString())
-        Future(BadRequest)
+        Future.successful(BadRequest)
     }
   }
 
@@ -73,10 +74,10 @@ class Application @Inject() (documentClient: DocumentClient,
     val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
     jsresult match {
       case _: JsSuccess[WishlistItem] =>
-        println("wishlist item: " + jsresult.get)
+        Logger.debug("wishlist item: " + jsresult.get)
         Ok
       case error: JsError =>
-        println("Errors: " + JsError.toJson(error).toString())
+        Logger.debug("Errors: " + JsError.toJson(error).toString())
         BadRequest
     }
   }
