@@ -15,9 +15,9 @@ import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParameters}
 import play.api.Configuration
-import play.api.libs.json.{JsError, JsSuccess, Json}
-import play.api.libs.ws._
 import play.api.http.Status._
+import play.api.libs.json.{JsSuccess, Json}
+import play.api.libs.ws._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -30,7 +30,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
              wishlist: Wishlist, token: String): Future[ResourceLocation] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
-     client,
+      client,
       "data",
       DocumentClient.WISHLIST_PATH,
       wishlist.id
@@ -51,7 +51,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
             case _ => throw new Exception("Could not parse result:" + response.json)
           }
         case CONFLICT => throw new DocumentExistsException("Wishlist exists", path)
-        case _  => throw new Exception("Unexpected response: " + response)
+        case _ => throw new Exception("Unexpected response: " + response)
 
       }
     }

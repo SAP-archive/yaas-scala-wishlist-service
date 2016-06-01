@@ -11,8 +11,6 @@
  */
 package com.sap.yaas.wishlist.model
 
-import java.net.URI
-
 import play.api.libs.json.Json
 
 case class ResourceLocation(id: String, link: String)
