@@ -5,6 +5,5 @@ import com.sap.yaas.wishlist.security.BasicAuthGlobalFilter
 class Filters @Inject() (
   basicAuthFilter: BasicAuthGlobalFilter
 ) extends HttpFilters {
-  println("hallo")
   val filters = Seq(basicAuthFilter)
 }

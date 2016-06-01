@@ -8,27 +8,28 @@ import play.api.mvc.Results._
 import java.nio.charset.StandardCharsets
 import akka.stream.Materializer
 
-class BasicAuthGlobalFilter @Inject() (config: Configuration)(implicit mat: Materializer, context: ExecutionContext) extends Filter {
+class BasicAuthGlobalFilter @Inject() (config: Configuration)(implicit val mat: Materializer, context: ExecutionContext) extends Filter {
 
   def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
-    println("halloglobalbasicauth")
 
    config.getStringSeq("yaas.security.basic_auth_credentials") match {
       case Some(configVals) =>
-        requestHeader.headers.get("Authorization") match {
-        case Some(headerAuth) =>
-          var didOneMatch = false
-          if (configVals.exists(cred =>
-            {
-              val (password, expected) = (cred.getBytes(StandardCharsets.UTF_8), headerAuth)
-              val authString = "Basic " + java.util.Base64.getEncoder.encodeToString(password)
-              authString == expected
-            }))
-              nextFilter(requestHeader)
-              else Future.successful(Forbidden)
-        case None =>
-          Future.successful(Forbidden)
-      }
+        if (configVals.length > 0) {
+          requestHeader.headers.get("Authorization") match {
+            case Some(headerAuth) =>
+              if (configVals.length > 0 && configVals.exists(cred =>
+                {
+                  val (password, expected) = (cred.getBytes(StandardCharsets.UTF_8), headerAuth)
+                  val authString = "Basic " + java.util.Base64.getEncoder.encodeToString(password)
+                  authString == expected
+                }))
+                  nextFilter(requestHeader)
+                  else Future.successful(Forbidden)
+            case None =>
+              Future.successful(Forbidden)
+          }
+        } else
+          nextFilter(requestHeader)
       case None =>
         nextFilter(requestHeader)
     }
