@@ -19,9 +19,9 @@ import play.api.Logger
 /**
   * Created by lutzh on 30.05.16.
   */
-class Application @Inject() (documentClient: DocumentClient,
-                             oauthClient: OAuthTokenCacheWrapper,
-                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
+class Application @Inject()(documentClient: DocumentClient,
+                            oauthClient: OAuthTokenCacheWrapper,
+                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = (Action andThen ViewActionFilter).async { request =>
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
@@ -58,6 +58,7 @@ class Application @Inject() (documentClient: DocumentClient,
         Future.successful(BadRequest)
     }
   }
+
 
   def getYaasAwareParameters(request: Request[JsValue]): YaasAwareParameters = {
     // TODO: validation, currently 500
