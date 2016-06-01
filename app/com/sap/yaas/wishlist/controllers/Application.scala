@@ -16,45 +16,50 @@ import com.sap.yaas.wishlist.security.ViewActionFilter
 /**
   * Created by lutzh on 30.05.16.
   */
-class Application @Inject() (documentClient: DocumentClient,
-                             oauthClient: OAuthTokenCacheWrapper,
-                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
+class Application @Inject()(documentClient: DocumentClient,
+                            oauthClient: OAuthTokenCacheWrapper,
+                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
-  def list = Action.async { request =>
-    oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
-      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
-    ).recover({
-      case _ =>
-        throw new RemoteServiceException("Error during token request, please try again.")
-    })
-  }
-
-  def create() = Action.async(BodyParsers.parse.json) { request =>
-    val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
-    jsresult match {
-      case wishlistOpt: JsSuccess[Wishlist] =>
-        val yaasAwareParameters: YaasAwareParameters = getYaasAwareParameters(request)
-        println("wishlist: " + jsresult.get)
-
-        (for {
-          token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                    config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
-          result <- documentClient.create(
-            yaasAwareParameters, wishlistOpt.get, token.access_token).map(
-            response => Ok(Json.toJson(response))
-          )
-        } yield result)
-          .recover({
-          case e: DocumentExistsException => Conflict
-          case e: Exception =>
-            e.printStackTrace()
-            InternalServerError(e.getMessage)
-        })
-      case error: JsError =>
-        println("Errors: " + JsError.toJson(error).toString())
-        Future(BadRequest)
+  def list = WireLog {
+    Action.async(BodyParsers.parse.json) { request =>
+      oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
+        Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
+      ).recover({
+        case _ =>
+          throw new RemoteServiceException("Error during token request, please try again.")
+      })
     }
   }
+
+  def create() = WireLog {
+    Action.async(BodyParsers.parse.json) { request =>
+      val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
+      jsresult match {
+        case wishlistOpt: JsSuccess[Wishlist] =>
+          val yaasAwareParameters: YaasAwareParameters = getYaasAwareParameters(request)
+          println("wishlist: " + jsresult.get)
+
+          (for {
+            token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+              config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+            result <- documentClient.create(
+              yaasAwareParameters, wishlistOpt.get, token.access_token).map(
+              response => Ok(Json.toJson(response))
+            )
+          } yield result)
+            .recover({
+              case e: DocumentExistsException => Conflict
+              case e: Exception =>
+                e.printStackTrace()
+                InternalServerError(e.getMessage)
+            })
+        case error: JsError =>
+          println("Errors: " + JsError.toJson(error).toString())
+          Future(BadRequest)
+      }
+    }
+  }
+
 
   def getYaasAwareParameters(request: Request[JsValue]): YaasAwareParameters = {
     // TODO: validation, currently 500
