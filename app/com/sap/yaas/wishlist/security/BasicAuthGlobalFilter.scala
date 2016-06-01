@@ -6,9 +6,8 @@ import scala.concurrent.{ ExecutionContext, Future }
 import play.api.Configuration
 import play.api.mvc.Results._
 import java.nio.charset.StandardCharsets
-import akka.stream.Materializer
 
-class BasicAuthGlobalFilter @Inject() (config: Configuration)(implicit val mat: Materializer, context: ExecutionContext) extends Filter {
+class BasicAuthGlobalFilter @Inject() (config: Configuration)(implicit context: ExecutionContext) extends Filter {
 
   def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
 
