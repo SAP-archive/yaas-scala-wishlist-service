@@ -13,6 +13,7 @@ package com.sap.yaas.wishlist.controllers
 
 
 import com.github.tomakehurst.wiremock.WireMockServer
+import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, WishlistItem}
@@ -61,8 +62,9 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
   "Application" must {
 
-    "create a wishlist in document service " in {
-      stubFor(post(urlEqualTo(s"/$tenant/$client/data/wishlist/$id"))
+    "create a wishlist in document service propagating the hybris-requestId" in {
+      val path = s"/$tenant/$client/data/wishlist/$id"
+      stubFor(post(urlEqualTo(path))
         .withHeader(contentTypeHeader, containing(contentTypeJson))
         .withHeader("hybris-requestId", equalTo(requestId))
         .withHeader("hybris-hop", equalTo(hop))
@@ -72,14 +74,14 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
             .withBody(Json.toJson(new ResourceLocation(id, link)).toString())
         )
       )
+      val wishlistJson = Json.toJson(wishlist)
       val request = FakeRequest(POST, "/")
-        .withHeaders(contentTypeHeader -> contentTypeJson,
-          "hybris-tenant" -> "myTenant",
-          "hybris-client" -> "myClient",
+        .withHeaders(getDefaultHeaders(): _*)
+        .withHeaders(
           "hybris-requestId" -> requestId,
-          "hybris-hop" -> hop,
-          "scope" -> "wishlist_manage")
-        .withBody(Json.toJson(wishlist))
+          "hybris-hop" -> hop
+        )
+        .withBody(wishlistJson)
 
       inside(route(request)) {
         case Some(result) =>
@@ -88,7 +90,62 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           (contentAsJson(result) \ "id").get mustEqual JsString(id)
           (contentAsJson(result) \ "link").get mustEqual JsString(link)
       }
+      WireMock.verify(WireMock.postRequestedFor(WireMock.urlMatching(path)).withRequestBody(
+        WireMock.equalToJson(wishlistJson.toString())))
     }
+
+    "return a conflict for an already existing wishlist" in {
+      stubFor(post(urlEqualTo(s"/$tenant/$client/data/wishlist/$id"))
+        .withHeader(contentTypeHeader, containing(contentTypeJson))
+        .willReturn(
+          aResponse().withStatus(CONFLICT)
+        )
+      )
+      val request = FakeRequest(POST, "/")
+        .withHeaders(getDefaultHeaders(): _*)
+        .withBody(Json.toJson(wishlist))
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe CONFLICT
+      }
+    }
+
+    "return a 500 for unexpected errors from the document repository" in {
+      stubFor(post(urlEqualTo(s"/$tenant/$client/data/wishlist/$id"))
+        .withHeader(contentTypeHeader, containing(contentTypeJson))
+        .willReturn(
+          aResponse().withStatus(INTERNAL_SERVER_ERROR)
+        )
+      )
+      val request = FakeRequest(POST, "/")
+        .withHeaders(getDefaultHeaders(): _*)
+        .withBody(Json.toJson(wishlist))
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe INTERNAL_SERVER_ERROR
+      }
+    }
+
+    "return a 400 for an invalid wishlist json" in {
+      val request = FakeRequest(POST, "/")
+        .withHeaders(getDefaultHeaders(): _*)
+        .withBody("{ \"invalid\" }")
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe BAD_REQUEST
+      }
+    }
+
+
   }
+
+  private def getDefaultHeaders(): Seq[(String, String)] = Seq(
+    contentTypeHeader -> contentTypeJson,
+    "hybris-tenant" -> tenant,
+    "hybris-client" -> client,
+    "scope" -> "wishlist_manage")
 
 }
