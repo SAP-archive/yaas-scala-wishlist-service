@@ -146,6 +146,6 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     contentTypeHeader -> contentTypeJson,
     "hybris-tenant" -> tenant,
     "hybris-client" -> client,
-    "scope" -> "wishlist_manage")
+    "scope" -> "altocon.wishlist_manage")
 
 }
