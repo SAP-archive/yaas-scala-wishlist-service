@@ -11,9 +11,5 @@
  */
 package com.sap.yaas.wishlist.security
 
-object SecurityUtils {
+class ForbiddenException(val scope: Option[String] = None, val requiredScopeIn: Seq[String]) extends Exception
 
-  val MANAGE_SCOPE = "altocon.wishlist_manage"
-
-  val VIEW_SCOPE = "altocon.wishlist_view"
-}

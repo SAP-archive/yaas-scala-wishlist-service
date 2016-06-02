@@ -44,18 +44,13 @@ class Application @Inject()(documentClient: DocumentClient,
 
   def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
-    (for {
+    for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response))
       )
-    } yield result)
-      .recover({
-        case e: Exception =>
-          Logger.error("Unexpected error while reading all wishlists from doc repo", e)
-          InternalServerError(e.getMessage)
-      })
+    } yield result
   }
 
   def create(): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
@@ -75,47 +70,35 @@ class Application @Inject()(documentClient: DocumentClient,
     }
   }
 
-  def update(wishlistId: String): Action[JsValue] = ManageAction (BodyParsers.parse.json) { request =>
-    val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
-    jsresult match {
-      case _: JsSuccess[WishlistItem] =>
-        Logger.debug("wishlist item: " + jsresult.get)
-        Ok
-      case error: JsError =>
-        Logger.debug("Errors: " + JsError.toJson(error).toString())
-        BadRequest
+  def update(wishlistId: String): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
+      request.body.validate[Wishlist] match {
+        case JsSuccess(jsonWishlist, _) =>
+          Logger.debug("wishlist item: " + jsonWishlist)
+          Future.successful(Ok)
+        case JsError(errors) =>
+          Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
     }
   }
-  
+
   def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
     implicit val yaasContext = request.yaasContext
-    (for {
+    for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.delete(wishlistId, token.access_token).map(response =>
         Ok("called document service with delete" + response)
       )
-    } yield result)
-      .recover({
-        case e: Exception =>
-          Logger.error("Unexpected error while reading all wishlists from doc repo", e)
-          InternalServerError(e.getMessage)
-      })
+    } yield result
   }
-  
+
   def getWishlist(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
-    (for {
+    for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
         Ok(Json.toJson(response))
       )
-    } yield result)
-      .recover({
-        case e: Exception =>
-          Logger.error("Unexpected error while reading all wishlists from doc repo", e)
-          InternalServerError(e.getMessage)
-      })
+    } yield result
   }
 }
