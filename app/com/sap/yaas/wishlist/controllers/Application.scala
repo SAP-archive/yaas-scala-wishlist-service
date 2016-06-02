@@ -13,17 +13,15 @@ package com.sap.yaas.wishlist.controllers
 
 import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.DocumentClient
-import com.sap.yaas.wishlist.model.{ Wishlist, WishlistItem }
+import com.sap.yaas.wishlist.model.Wishlist
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import com.sap.yaas.wishlist.security.YaasActions._
 import com.sap.yaas.wishlist.service.ConstraintViolationException
-import play.api.libs.json.{ JsError, JsResult, JsSuccess, Json, _ }
+import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
-import play.api.{ Configuration, Logger }
+import play.api.{Configuration, Logger}
 
-import scala.concurrent.{ ExecutionContext, Future }
-import com.sap.yaas.wishlist.model.OAuthToken
-import com.sap.yaas.wishlist.model.YaasAwareParameters
+import scala.concurrent.{ExecutionContext, Future}
 
 class Application @Inject() (documentClient: DocumentClient,
     oauthClient: OAuthTokenCacheWrapper,

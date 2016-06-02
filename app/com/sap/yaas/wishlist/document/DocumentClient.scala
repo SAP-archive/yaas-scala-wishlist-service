@@ -47,10 +47,15 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
       "data",
       DocumentClient.WISHLIST_PATH).mkString("/")
     val request: WSRequest = ws.url(path)
-      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
-        "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+      .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
         "Authorization" -> ("Bearer " + token)).withQueryString("totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get)
+
+
+    val futureResponse: Future[WSResponse] =
+      breaker.withCircuitBreaker(failEarly(pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get))
+
+
+
     futureResponse map {
       response =>
         response.status match {
@@ -73,12 +78,11 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
       DocumentClient.WISHLIST_PATH,
       wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
-      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
-        "hybris-hop" -> yaasAwareParameters.hybrisHop.toString,
+      .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
         "Authorization" -> ("Bearer " + token) // ContentType set by Play
         )
     // timeout set by Play: play.ws.timeout.connection
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(request.post(Json.toJson(wishlist)))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.post(Json.toJson(wishlist))))
     futureResponse map { response =>
       response.status match {
         case CREATED => // O
@@ -101,10 +105,10 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
       DocumentClient.WISHLIST_PATH,
       wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
-      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
-        "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+      .withHeaders(yaasAwareParameters.asSeq: _*)
+      .withHeaders(
         "Authorization" -> ("Bearer " + token))
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(request.get)
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.get))
     futureResponse map {
       response =>
         response.status match {
@@ -118,6 +122,7 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
     }
   }
 
+
   def update(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
     Future.successful("")
   }
@@ -125,6 +130,17 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
   def delete(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
     Future.successful("")
   }
+
+  def failEarly(wsresponse: Future[WSResponse]): Future[WSResponse] =
+    wsresponse.map(
+      response =>
+        response.status match {
+          /* fail ws request if we get a 503 */
+          //          case SERVICE_UNAVAILABLE | GATEWAY_TIMEOUT | INSUFFICIENT_STORAGE   => throw new Exception()
+                   case NOT_FOUND  => throw new Exception()
+        }
+    )
+
 }
 
 object DocumentClient {
