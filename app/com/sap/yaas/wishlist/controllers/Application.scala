@@ -26,6 +26,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern.CircuitBreaker
 import scala.concurrent.duration._
 import akka.actor.ActorSystem
+import com.sap.yaas.wishlist.model.OAuthToken
 
 
 class Application @Inject()(documentClient: DocumentClient,
@@ -41,12 +42,12 @@ class Application @Inject()(documentClient: DocumentClient,
   def notifyMeOnOpen(): Unit =
     Logger.warn("My CircuitBreaker is now open, and will not close for one minute")
 
-
+  
   def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.document_view"))
       result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response))
       )
