@@ -26,6 +26,8 @@ import com.sap.yaas.wishlist.model.YaasAwareParameters
 object YaasActions {
 
   val YaasAction = YaasActionBuilder andThen YaasActionTransformer
+  val ManageAction = YaasAction andThen ManageActionFilter
+  val ViewAction = YaasAction andThen ViewActionFilter
 
   private[this] object YaasActionBuilder extends ActionBuilder[Request] {
     // TODO check if yaas required parameters are set?

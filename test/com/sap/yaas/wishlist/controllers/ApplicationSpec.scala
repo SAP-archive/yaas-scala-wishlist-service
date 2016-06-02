@@ -21,16 +21,17 @@ import com.sap.yaas.wishlist.model.{OAuthToken, ResourceLocation, Wishlist, Wish
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Inside._
 import org.scalatestplus.play._
-import play.api.http.MimeTypes.JSON
 import play.api.libs.json.{JsString, Json}
 import play.api.test.Helpers._
 import play.api.test._
 
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
-  app.errorHandler = new ErrorHandler()
   val wishlistItem = new WishlistItem("product", 4, Some("note"), None)
+  val wishlistInvalidItem = new WishlistItem("", 0, Some("note"), None)
   val wishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem))
+  val invalidWishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem, wishlistInvalidItem))
+
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
 
@@ -78,7 +79,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         )
       )
       val wishlistJson = Json.toJson(wishlist)
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
           "hybris-requestId" -> TEST_REQUEST_ID,
@@ -104,7 +105,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(CONFLICT)
         )
       )
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
@@ -115,6 +116,17 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       }
     }
 
+    "return a 400 for an invalid wishlist" in {
+      val request = FakeRequest(POST, "/")
+        .withHeaders(defaultHeaders: _*)
+        .withBody(Json.toJson(invalidWishlist))
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe CONFLICT
+      }
+    }
+
     "return a 500 for unexpected errors from the document repository" in {
       stubFor(post(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"))
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
@@ -122,7 +134,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(INTERNAL_SERVER_ERROR)
         )
       )
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
@@ -133,7 +145,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     }
 
     "return a 400 for an invalid wishlist json" in {
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody("{ \"invalid\" }")
 

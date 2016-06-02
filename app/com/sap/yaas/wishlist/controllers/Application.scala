@@ -11,12 +11,13 @@
  */
 package com.sap.yaas.wishlist.controllers
 
+
 import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.DocumentClient
 import com.sap.yaas.wishlist.model.{Wishlist, WishlistItem}
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import com.sap.yaas.wishlist.security.YaasActions._
-import com.sap.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter}
+import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Logger}
@@ -27,34 +28,35 @@ class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper,
                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
-  def list(): Action[AnyContent] = (YaasAction andThen ViewActionFilter).async { request =>
-    oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-      config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
-      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
-    )
+  def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
+    implicit val yaasContext = request.yaasContext
+    for {
+      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+      result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
+        Ok(Json.toJson(response))
+      )
+    } yield result
   }
 
-  def create(): Action[JsValue] = (YaasAction andThen ManageActionFilter).async(BodyParsers.parse.json) { request =>
+  def create(): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
     implicit val yaasContext = request.yaasContext
-    val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
-    jsresult match {
-      case wishlistOpt: JsSuccess[Wishlist] =>
-        Logger.debug("wishlist: " + jsresult.get)
-
+    request.body.validate[Wishlist] match {
+      case JsSuccess(jsonWishlist, _) =>
+        Logger.debug("wishlist: " + jsonWishlist)
         for {
           token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
             config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
-          result <- documentClient.create(wishlistOpt.get, token.access_token).map(
+          result <- documentClient.create(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response))
           )
         } yield result
-      case error: JsError =>
-        Logger.debug("Errors: " + JsError.toJson(error).toString())
-        Future.successful(BadRequest)
+      case JsError(errors) =>
+        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
     }
   }
 
-  def update(): Action[JsValue] = (YaasAction andThen ManageActionFilter) (BodyParsers.parse.json) { request =>
+  def update(wishlistId: String): Action[JsValue] = ManageAction(BodyParsers.parse.json) { request =>
     val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
     jsresult match {
       case _: JsSuccess[WishlistItem] =>
@@ -62,7 +64,30 @@ class Application @Inject()(documentClient: DocumentClient,
         Ok
       case error: JsError =>
         Logger.debug("Errors: " + JsError.toJson(error).toString())
-        BadRequest
+        // TODO replace with validation
+        throw new IllegalArgumentException
     }
+  }
+
+  def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
+    implicit val yaasContext = request.yaasContext
+    for {
+      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+      result <- documentClient.delete(wishlistId, token.access_token).map(response =>
+        Ok("called document service with delete" + response)
+      )
+    } yield result
+  }
+
+  def getWishlist(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
+    implicit val yaasContext = request.yaasContext
+    for {
+      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+      result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
+        Ok(Json.toJson(response))
+      )
+    } yield result
   }
 }
