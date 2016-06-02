@@ -23,25 +23,13 @@ import play.api.mvc._
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.{ExecutionContext, Future}
-import akka.pattern.CircuitBreaker
-import scala.concurrent.duration._
-import akka.actor.ActorSystem
 import com.sap.yaas.wishlist.model.OAuthToken
+import com.sap.yaas.wishlist.model.YaasAwareParameters
 
 
 class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper,
-                            config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) extends Controller {
-  
-   val breaker =
-    new CircuitBreaker(system.scheduler,
-      maxFailures = 5,
-      callTimeout = 10.seconds,
-      resetTimeout = 1.minute).onOpen(notifyMeOnOpen())
- 
-  def notifyMeOnOpen(): Unit =
-    Logger.warn("My CircuitBreaker is now open, and will not close for one minute")
-
+                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
   
   def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
@@ -96,7 +84,7 @@ class Application @Inject()(documentClient: DocumentClient,
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.document_view"))
       result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
         Ok(Json.toJson(response))
       )

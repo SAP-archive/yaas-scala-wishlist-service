@@ -13,34 +13,46 @@ package com.sap.yaas.wishlist.document
 
 import javax.inject.Inject
 
+import com.sap.yaas.wishlist.model.Wishlist._
 import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParameters}
-import Wishlist._
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.libs.ws._
 
-
 import scala.concurrent.{ExecutionContext, Future}
-import com.sap.yaas.wishlist.model.WishlistItem
-import play.mvc.Http.Response
+import akka.pattern.CircuitBreaker
+import akka.actor.ActorSystem
+import scala.concurrent.duration._
+import play.api.Logger
+import play.api.libs.json.JsValue
 
-class DocumentClient @Inject()(ws: WSClient, config: Configuration)
+class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: ActorSystem)
                               (implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
   
-  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+  val breaker =
+    new CircuitBreaker(system.scheduler,
+      maxFailures = 5,
+      callTimeout = 2.seconds,
+      resetTimeout = 1.minute).onOpen(notifyMeOnOpen())
+ 
+  def notifyMeOnOpen(): Unit =
+    Logger.warn("My CircuitBreaker is now open, and will not close for one minute")
+
+  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
+                  (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
-        yaasAwareParameters.hybrisTenant,
-        client,
-        "data",
-        DocumentClient.WISHLIST_PATH).mkString("/")
+      yaasAwareParameters.hybrisTenant,
+      client,
+      "data",
+      DocumentClient.WISHLIST_PATH).mkString("/")
     val request: WSRequest = ws.url(path)
-       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
-           "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
-           "Authorization" -> ("Bearer " + token)).withQueryString("totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
-    val futureResponse: Future[WSResponse] = pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get()
+      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+        "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+        "Authorization" -> ("Bearer " + token)).withQueryString("totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get)
     futureResponse map {
       response =>
         response.status match {
@@ -70,7 +82,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
         // ContentType set by Play
       )
     // timeout set by Play: play.ws.timeout.connection
-    val futureResponse: Future[WSResponse] = request.post(Json.toJson(wishlist))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(request.post(Json.toJson(wishlist)))
     futureResponse map { response =>
       response.status match {
         case CREATED => // O
@@ -84,19 +96,19 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
       }
     }
   }
-  
+
   def getWishlist(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
     val path = List(config.getString("yaas.document.url").get,
-        yaasAwareParameters.hybrisTenant,
-        client,
-        "data",
-        DocumentClient.WISHLIST_PATH,
-        wishlistId).mkString("/")
+      yaasAwareParameters.hybrisTenant,
+      client,
+      "data",
+      DocumentClient.WISHLIST_PATH,
+      wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
-       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
-           "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
-           "Authorization" -> ("Bearer " + token))
-    val futureResponse: Future[WSResponse] = request.get()
+      .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+        "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+        "Authorization" -> ("Bearer " + token))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(request.get)
     futureResponse map {
       response =>
         response.status match {
@@ -109,11 +121,11 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
         }
     }
   }
-  
+
   def update(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
     Future.successful("")
   }
-  
+
   def delete(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
     Future.successful("")
   }

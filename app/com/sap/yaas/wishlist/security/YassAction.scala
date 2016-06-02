@@ -11,10 +11,10 @@
  */
 package com.sap.yaas.wishlist.security
 
+import com.sap.yaas.wishlist.model.YaasAwareParameters
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
-import com.sap.yaas.wishlist.model.YaasAwareParameters
+import scala.concurrent.Future
 
 /**
   * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
@@ -32,11 +32,14 @@ object YaasActions {
   private[this] object YaasActionBuilder extends ActionBuilder[Request] {
     // TODO check if yaas required parameters are set?
     implicit val ec = executionContext
-    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) =
+
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] =
       block(request).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
   }
 
-  private[this] object YaasActionTransformer extends  ActionTransformer[Request, YaasRequest] {
-    def transform[A](request: Request[A]) = Future.successful(YaasRequest(YaasAwareParameters(request), request))
+  private[this] object YaasActionTransformer extends ActionTransformer[Request, YaasRequest] {
+    def transform[A](request: Request[A]): Future[YaasRequest[A]] =
+      Future.successful(YaasRequest(YaasAwareParameters(request), request))
   }
+
 }
