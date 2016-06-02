@@ -62,7 +62,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
               case s: JsSuccess[Wishlists] => s.get
               case _ => throw new Exception("Could not parse result: " + response.json)
             }
-          case _ => throw new Exception("Unexpected response: " + response)
+          case _ => throw new Exception("Unexpected response status: " + response)
         }
     }
   }
@@ -91,7 +91,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
             case _ => throw new Exception("Could not parse result:" + response.json)
           }
         case CONFLICT => throw new DocumentExistsException("Wishlist exists", path)
-        case _ => throw new Exception("Unexpected response: " + response)
+        case _ => throw new Exception("Unexpected response status: " + response)
 
       }
     }
@@ -117,7 +117,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
               case s: JsSuccess[Wishlist] => s.get
               case _ => throw new Exception("Could not parse result: " + response.json)
             }
-          case _ => throw new Exception("Unexpected response: " + response)
+          case _ => throw new Exception("Unexpected response status: " + response)
         }
     }
   }

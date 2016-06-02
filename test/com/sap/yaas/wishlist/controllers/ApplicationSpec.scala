@@ -35,7 +35,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     val wiremockUrl = s"http://localhost:$WIREMOCK_PORT"
     sys.props ++= Map(YAAS_DOCUMENT_URL -> wiremockUrl,
       YAAS_SECURITY_OAUTH_URL -> wiremockUrl,
@@ -54,7 +54,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     super.beforeAll()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     sys.props -= YAAS_DOCUMENT_URL
     sys.props -= YAAS_SECURITY_OAUTH_URL
     sys.props -= YAAS_CLIENT
@@ -79,7 +79,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         )
       )
       val wishlistJson = Json.toJson(wishlist)
-      val request = FakeRequest(POST, "/wishlists")
+      val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
           "hybris-requestId" -> TEST_REQUEST_ID,
@@ -105,7 +105,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(CONFLICT)
         )
       )
-      val request = FakeRequest(POST, "/wishlists")
+      val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
@@ -117,13 +117,24 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     }
 
     "return a 400 for an invalid wishlist" in {
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(invalidWishlist))
 
       inside(route(request)) {
         case Some(result) =>
-          status(result) mustBe CONFLICT
+          status(result) mustBe BAD_REQUEST
+      }
+    }
+
+    "return a 400 for an invalid wishlist json" in {
+      val request = FakeRequest(POST, WISHLIST_PATH)
+        .withHeaders(defaultHeaders: _*)
+        .withBody("{ \"invalid\" }")
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe BAD_REQUEST
       }
     }
 
@@ -134,24 +145,13 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(INTERNAL_SERVER_ERROR)
         )
       )
-      val request = FakeRequest(POST, "/wishlists")
+      val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
       inside(route(request)) {
         case Some(result) =>
           status(result) mustBe INTERNAL_SERVER_ERROR
-      }
-    }
-
-    "return a 400 for an invalid wishlist json" in {
-      val request = FakeRequest(POST, "/wishlists")
-        .withHeaders(defaultHeaders: _*)
-        .withBody("{ \"invalid\" }")
-
-      inside(route(request)) {
-        case Some(result) =>
-          status(result) mustBe BAD_REQUEST
       }
     }
 
@@ -171,6 +171,8 @@ object ApplicationSpec {
   val YAAS_DOCUMENT_URL = "yaas.document.url"
   val YAAS_SECURITY_OAUTH_URL = "yaas.security.oauth_url"
   val YAAS_CLIENT = "yaas.client"
+  val WISHLIST_PATH = "/wishlists"
+
 
   val WIREMOCK_PORT = 8089
 
