@@ -13,14 +13,14 @@ package com.sap.yaas.wishlist.security
 
 import java.nio.charset.StandardCharsets
 import javax.inject.Inject
-
+import akka.stream.Materializer
 import play.api.Configuration
 import play.api.mvc.Results._
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class BasicAuthGlobalFilter @Inject()(config: Configuration)(implicit context: ExecutionContext) extends Filter {
+class BasicAuthGlobalFilter @Inject()(config: Configuration)(implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
   def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {
 
