@@ -57,10 +57,16 @@ class Application @Inject() (documentClient: DocumentClient,
   }
 
   def update(wishlistId: String): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
+    implicit val yaasContext = request.yaasContext
     request.body.validate[Wishlist] match {
       case JsSuccess(jsonWishlist, _) =>
         Logger.debug("wishlist item: " + jsonWishlist)
-        Future.successful(Ok)
+        for {
+          token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+            config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+          result <- documentClient.update(jsonWishlist, token.access_token).map(
+            response => Ok(Json.toJson(response)))
+        } yield result
       case JsError(errors) =>
         Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
     }
@@ -70,9 +76,9 @@ class Application @Inject() (documentClient: DocumentClient,
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
       result <- documentClient.delete(wishlistId, token.access_token).map(response =>
-        Ok("called document service with delete" + response))
+        NoContent)
     } yield result
   }
 
