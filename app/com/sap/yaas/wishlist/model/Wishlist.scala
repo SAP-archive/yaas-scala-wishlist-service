@@ -11,7 +11,6 @@
  */
 package com.sap.yaas.wishlist.model
 
-
 /*
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
@@ -61,7 +60,7 @@ package com.sap.yaas.wishlist.model
 
  */
 case class Wishlist(id: String, owner: String, title: String,
-                    items: Seq[WishlistItem], url: Option[String] = None)
+  items: Seq[WishlistItem], url: Option[String] = None)
 
 //TODO: Json format for java.net.URI
 
@@ -72,14 +71,12 @@ object Wishlist {
   import play.api.libs.json.Reads._
   import play.api.libs.functional.syntax._
 
-
   implicit val wishlistReads: Reads[Wishlist] = (
     (JsPath \ "id").read[String](minLength[String](1))
-      .and((JsPath \ "owner").read[String](minLength[String](1)))
-      .and((JsPath \ "title").read[String](minLength[String](1)))
-      .and((JsPath \ "items").read[Seq[WishlistItem]])
-      .and((JsPath \ "url").readNullable[String])
-    )(Wishlist.apply _)
+    .and((JsPath \ "owner").read[String](minLength[String](1)))
+    .and((JsPath \ "title").read[String](minLength[String](1)))
+    .and((JsPath \ "items").read[Seq[WishlistItem]])
+    .and((JsPath \ "url").readNullable[String]))(Wishlist.apply _)
 
   implicit val wishlistWrites = Json.writes[Wishlist]
 

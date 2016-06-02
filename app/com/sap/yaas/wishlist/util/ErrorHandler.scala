@@ -1,3 +1,14 @@
+/*
+ * [y] hybris Platform
+ *
+ * Copyright (c) 2000-2016 hybris AG
+ * All rights reserved.
+ *
+ * This software is the confidential and proprietary information of hybris
+ * ("Confidential Information"). You shall not disclose such Confidential
+ * Information and shall use it only in accordance with the terms of the
+ * license agreement you entered into with hybris.
+ */
 package com.sap.yaas.wishlist.util
 
 import java.net.URI
@@ -6,6 +17,7 @@ import javax.inject._
 import com.sap.yaas.wishlist.document.DocumentExistsException
 import com.sap.yaas.wishlist.model.{ErrorDetail, ErrorMessage}
 import com.sap.yaas.wishlist.security.{ForbiddenException, UnauthorizedException}
+import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api._
 import play.api.http.DefaultHttpErrorHandler
 import play.api.http.Status._
@@ -46,6 +58,7 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
       case e: DocumentExistsException => Conflict(createBody(e))
       case e: UnauthorizedException => Unauthorized(createBody(e))
       case e: ForbiddenException => Forbidden(createBody(e))
+      case e: ConstraintViolationException => BadRequest(createBody(e))
       case e: Exception => InternalServerError(createBody(e))
     })
   }
@@ -64,7 +77,16 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   private def createBody(exception: UnauthorizedException): JsValue = {
-    createErrorMessage(UNAUTHORIZED, "Unauthorized to call the service")
+    createErrorMessage(UNAUTHORIZED, "Unauthorized call")
+  }
+
+  private def createBody(exception: ConstraintViolationException): JsValue = {
+    // TODO render ErrorDetails
+    val details = exception.errors.flatMap(error =>
+      error._2.map(validationError =>
+        createErrorDetail(Some(error._1), "validation_error", validationError.message)
+      ))
+    createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
   }
 
   private def createBody(exception: ForbiddenException): JsValue = {
@@ -78,18 +100,12 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   private def createErrorMessage(status: Int, message: String,
-                                 details: List[ErrorDetail] = Nil): JsValue = {
-
-    Json.toJson(ErrorMessage(
-      status = status,
-      errorTypeForStatus(status),
-      message = message,
-      moreInfo = baseUri,
-      details = details))
+                                 details: Seq[ErrorDetail] = Nil): JsValue = {
+    Json.toJson(ErrorMessage(status, errorTypeForStatus(status), message, details, baseUri))
   }
 
-  private def createErrorDetail(field: Option[String], `type`: String, message: String): ErrorDetail = {
-    ErrorDetail(field, `type` = `type`, message = message, baseUri)
+  private def createErrorDetail(fieldOpt: Option[String], `type`: String, message: String): ErrorDetail = {
+    ErrorDetail(fieldOpt, `type`, message, baseUri)
   }
 }
 
