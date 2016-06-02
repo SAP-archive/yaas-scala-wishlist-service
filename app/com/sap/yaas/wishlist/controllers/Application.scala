@@ -33,7 +33,7 @@ class Application @Inject()(documentClient: DocumentClient,
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
                 config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlists(token.access_token).map(response =>
-        Ok("called document service with get")
+        Ok(Json.toJson(response))
       )
     } yield result)
       .recover({
@@ -103,7 +103,7 @@ class Application @Inject()(documentClient: DocumentClient,
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
                 config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
-        Ok("called document service with get" + response)
+        Ok(Json.toJson(response))
       )
     } yield result)
       .recover({
