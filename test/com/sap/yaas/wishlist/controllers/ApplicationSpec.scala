@@ -33,7 +33,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
   val invalidWishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem, wishlistInvalidItem))
 
   val wireMockServer: WireMockServer = new WireMockServer(
-    WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
+    WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT))
 
   override def beforeAll(): Unit = {
     val wiremockUrl = s"http://localhost:$WIREMOCK_PORT"
@@ -87,7 +87,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         )
         .withBody(wishlistJson)
 
-      inside(route(request)) {
+      inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe OK
           contentType(result) mustEqual Some(JSON)
@@ -109,7 +109,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
-      inside(route(request)) {
+      inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe CONFLICT
         case _ => println("error")
@@ -121,7 +121,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(invalidWishlist))
 
-      inside(route(request)) {
+      inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe BAD_REQUEST
       }
@@ -132,7 +132,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeaders(defaultHeaders: _*)
         .withBody("{ \"invalid\" }")
 
-      inside(route(request)) {
+      inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe BAD_REQUEST
       }
@@ -149,7 +149,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
-      inside(route(request)) {
+      inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe INTERNAL_SERVER_ERROR
       }
