@@ -11,13 +11,14 @@
  */
 package com.sap.yaas.wishlist.controllers
 
+
 import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.{DocumentClient, DocumentExistsException}
 import com.sap.yaas.wishlist.model.{Wishlist, WishlistItem}
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import com.sap.yaas.wishlist.security.YaasActions._
 import com.sap.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter}
-import com.sap.yaas.wishlist.service.RemoteServiceException
+import com.sap.yaas.wishlist.service.{ConstraintViolationException, RemoteServiceException}
 import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Logger}
@@ -40,27 +41,18 @@ class Application @Inject()(documentClient: DocumentClient,
 
   def create(): Action[JsValue] = (YaasAction andThen ManageActionFilter).async(BodyParsers.parse.json) { request =>
     implicit val yaasContext = request.yaasContext
-    val jsresult: JsResult[Wishlist] = request.body.validate[Wishlist]
-    jsresult match {
-      case wishlistOpt: JsSuccess[Wishlist] =>
-        Logger.debug("wishlist: " + jsresult.get)
-
-        (for {
+    request.body.validate[Wishlist] match {
+      case JsSuccess(jsonWishlist, _) =>
+        Logger.debug("wishlist: " + jsonWishlist)
+        for {
           token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
             config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
-          result <- documentClient.create(wishlistOpt.get, token.access_token).map(
+          result <- documentClient.create(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response))
           )
-        } yield result)
-          .recover({
-            case e: DocumentExistsException => Conflict
-            case e: Exception =>
-              Logger.error("Unexpected error while creating a wishlist", e)
-              InternalServerError(e.getMessage)
-          })
-      case error: JsError =>
-        Logger.debug("Errors: " + JsError.toJson(error).toString())
-        Future.successful(BadRequest)
+        } yield result
+      case JsError(errors) =>
+        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
     }
   }
 
