@@ -20,4 +20,5 @@ case class Wishlist(id: String, owner: String, title: String,
 
 object Wishlist {
   implicit val WishlistFormat = Json.format[Wishlist]
+  type Wishlists = Seq[Wishlist]
 }

@@ -2,7 +2,9 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
-GET         /        com.sap.yaas.wishlist.controllers.Application.list()
-POST        /        com.sap.yaas.wishlist.controllers.Application.create()
-PUT         /        com.sap.yaas.wishlist.controllers.Application.update()
+GET         /wishlists                     com.sap.yaas.wishlist.controllers.Application.getWishlists()
+POST        /wishlists                     com.sap.yaas.wishlist.controllers.Application.create()
 
+GET         /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.getWishlist(wishlistId: String)
+PUT         /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.update(wishlistId: String)
+DELETE      /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.delete(wishlistId: String)

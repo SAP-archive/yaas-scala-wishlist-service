@@ -76,7 +76,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         )
       )
       val wishlistJson = Json.toJson(wishlist)
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
           "hybris-requestId" -> TEST_REQUEST_ID,
@@ -102,7 +102,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(CONFLICT)
         )
       )
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
@@ -119,7 +119,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(INTERNAL_SERVER_ERROR)
         )
       )
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
 
@@ -130,7 +130,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     }
 
     "return a 400 for an invalid wishlist json" in {
-      val request = FakeRequest(POST, "/")
+      val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody("{ \"invalid\" }")
 
