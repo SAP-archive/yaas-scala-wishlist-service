@@ -2,6 +2,8 @@
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
 
+GET  /public/*file        controllers.Assets.at(path="/public", file)
+
 GET         /wishlists                     com.sap.yaas.wishlist.controllers.Application.getWishlists(pageNumber: Option[Int] ?= None, pageSize: Option[Int] ?= None)
 POST        /wishlists                     com.sap.yaas.wishlist.controllers.Application.create()
 
