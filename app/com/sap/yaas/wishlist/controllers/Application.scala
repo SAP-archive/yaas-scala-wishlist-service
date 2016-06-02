@@ -32,7 +32,7 @@ class Application @Inject()(documentClient: DocumentClient,
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response))
       )
@@ -65,23 +65,23 @@ class Application @Inject()(documentClient: DocumentClient,
           Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
     }
   }
-  
+
   def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.delete(wishlistId, token.access_token).map(response =>
         Ok("called document service with delete" + response)
       )
     } yield result
   }
-  
+
   def getWishlist(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-                config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
+        config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
       result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
         Ok(Json.toJson(response))
       )

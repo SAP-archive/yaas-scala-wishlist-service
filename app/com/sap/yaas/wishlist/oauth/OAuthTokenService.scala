@@ -14,7 +14,6 @@ package com.sap.yaas.wishlist.oauth
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
-import com.sap.yaas.wishlist.service.RemoteServiceException
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.ws.WSClient
@@ -42,7 +41,7 @@ class OAuthTokenService @Inject()(configuration: Configuration, ws: WSClient)(im
                 .fold(_ => throw new Exception("parse json failed on success"),
                   s => s)
             case INTERNAL_SERVER_ERROR =>
-              throw new RemoteServiceException("Something went wrong")
+              throw new Exception(s"Service error ${response.status}: ${response.body}")
             case default =>
               response.json.validate[OAuthTokenError]
                 .fold(_ => throw new Exception("parse json failed on failure"),

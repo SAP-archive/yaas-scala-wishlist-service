@@ -68,13 +68,13 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
 
       stubFor(post(urlEqualTo(path))
-        .withHeader(CONTENT_TYPE_HEADER, containing(CONTENT_TYPE_JSON))
+        .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
         .withHeader("hybris-requestId", equalTo(TEST_REQUEST_ID))
         .withHeader("hybris-hop", equalTo(TEST_HOP))
         .withHeader("Authorization", containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
-            .withHeader(CONTENT_TYPE_HEADER, CONTENT_TYPE_JSON)
+            .withHeader(CONTENT_TYPE_HEADER, JSON)
             .withBody(Json.toJson(new ResourceLocation(TEST_ID, TEST_LINK)).toString())
         )
       )
@@ -90,7 +90,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       inside(route(request)) {
         case Some(result) =>
           status(result) mustBe OK
-          contentType(result) mustEqual Some(CONTENT_TYPE_JSON)
+          contentType(result) mustEqual Some(JSON)
           (contentAsJson(result) \ "id").get mustEqual JsString(TEST_ID)
           (contentAsJson(result) \ "link").get mustEqual JsString(TEST_LINK)
       }
@@ -100,7 +100,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
     "return a conflict for an already existing wishlist" in {
       stubFor(post(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"))
-        .withHeader(CONTENT_TYPE_HEADER, containing(CONTENT_TYPE_JSON))
+        .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
         .willReturn(
           aResponse().withStatus(CONFLICT)
         )
@@ -112,6 +112,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       inside(route(request)) {
         case Some(result) =>
           status(result) mustBe CONFLICT
+        case _ => println("error")
       }
     }
 
@@ -128,7 +129,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
     "return a 500 for unexpected errors from the document repository" in {
       stubFor(post(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"))
-        .withHeader(CONTENT_TYPE_HEADER, containing(CONTENT_TYPE_JSON))
+        .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
         .willReturn(
           aResponse().withStatus(INTERNAL_SERVER_ERROR)
         )
@@ -157,7 +158,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
   }
 
   val defaultHeaders: Seq[(String, String)] = Seq(
-    CONTENT_TYPE_HEADER -> CONTENT_TYPE_JSON,
+    CONTENT_TYPE_HEADER -> JSON,
     "hybris-tenant" -> TEST_TENANT,
     "hybris-client" -> TEST_CLIENT,
     "scope" -> "altocon.wishlist_manage")
@@ -167,7 +168,6 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 object ApplicationSpec {
 
   val CONTENT_TYPE_HEADER = "Content-Type"
-  val CONTENT_TYPE_JSON = "application/json"
   val YAAS_DOCUMENT_URL = "yaas.document.url"
   val YAAS_SECURITY_OAUTH_URL = "yaas.security.oauth_url"
   val YAAS_CLIENT = "yaas.client"
