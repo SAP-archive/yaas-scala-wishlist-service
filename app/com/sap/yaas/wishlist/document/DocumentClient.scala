@@ -14,17 +14,45 @@ package com.sap.yaas.wishlist.document
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParameters}
+import Wishlist._
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.libs.ws._
 
+
 import scala.concurrent.{ExecutionContext, Future}
+import com.sap.yaas.wishlist.model.WishlistItem
+import play.mvc.Http.Response
 
 class DocumentClient @Inject()(ws: WSClient, config: Configuration)
                               (implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
+  
+  def getWishlists(token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+    val path = List(config.getString("yaas.document.url").get,
+        yaasAwareParameters.hybrisTenant,
+        client,
+        "data",
+        DocumentClient.WISHLIST_PATH).mkString("/")
+    val request: WSRequest = ws.url(path)
+       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+           "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+           "Authorization" -> ("Bearer " + token))
+    val futureResponse: Future[WSResponse] = request.get()
+    futureResponse map {
+      response =>
+        response.status match {
+          case OK =>
+            response.json.validate[Wishlists] match {
+              case s: JsSuccess[Wishlists] => s.get
+              case _ => throw new Exception("Could not parse result: " + response.json)
+            }
+          case _ => throw new Exception("Unexpected response: " + response)
+        }
+    }
+  }
 
   def create(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
     val path = List(config.getString("yaas.document.url").get,
@@ -54,6 +82,39 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
 
       }
     }
+  }
+  
+  def getWishlist(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
+    val path = List(config.getString("yaas.document.url").get,
+        yaasAwareParameters.hybrisTenant,
+        client,
+        "data",
+        DocumentClient.WISHLIST_PATH,
+        wishlistId).mkString("/")
+    val request: WSRequest = ws.url(path)
+       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+           "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+           "Authorization" -> ("Bearer " + token))
+    val futureResponse: Future[WSResponse] = request.get()
+    futureResponse map {
+      response =>
+        response.status match {
+          case OK =>
+            response.json.validate[Wishlist] match {
+              case s: JsSuccess[Wishlist] => s.get
+              case _ => throw new Exception("Could not parse result: " + response.json)
+            }
+          case _ => throw new Exception("Unexpected response: " + response)
+        }
+    }
+  }
+  
+  def update(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
+    Future.successful("")
+  }
+  
+  def delete(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[String] = {
+    Future.successful("")
   }
 }
 
