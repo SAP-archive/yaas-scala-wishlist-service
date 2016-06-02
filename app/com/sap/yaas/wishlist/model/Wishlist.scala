@@ -19,6 +19,8 @@ case class Wishlist(id: String, owner: String, title: String,
 //TODO: Json format for java.net.URI
 
 object Wishlist {
+
   implicit val WishlistFormat = Json.format[Wishlist]
+
   type Wishlists = Seq[Wishlist]
 }

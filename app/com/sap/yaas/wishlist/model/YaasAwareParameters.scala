@@ -24,7 +24,7 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
 }
 
 object YaasAwareParameters {
-  def apply[A](request: Request[A]) = {
+  def apply[A](request: Request[A]): YaasAwareParameters = {
     new YaasAwareParameters(
       request.headers.get("hybris-tenant").getOrElse(throw new Exception("tenant header missing")),
       request.headers.get("hybris-client").getOrElse(throw new Exception("client header missing")),
