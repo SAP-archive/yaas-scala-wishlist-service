@@ -61,7 +61,7 @@ class Application @Inject() (documentClient: DocumentClient,
         Logger.debug("wishlist item: " + jsonWishlist)
         Future.successful(Ok)
       case JsError(errors) =>
-        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
+        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
     }
   }
 

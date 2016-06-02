@@ -83,8 +83,8 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   private def createBody(exception: ConstraintViolationException): JsValue = {
     // TODO render ErrorDetails
     val details = exception.errors.flatMap(error =>
-      error._2.map(validationError =>
-        createErrorDetail(Some(error._1), "validation_error", validationError.message)
+      error._2.map(errorMessage =>
+        createErrorDetail(Some(error._1), "validation_error", errorMessage)
       ))
     createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
   }
