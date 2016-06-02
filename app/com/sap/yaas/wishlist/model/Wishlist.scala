@@ -74,7 +74,7 @@ object Wishlist {
 
 
   implicit val wishlistReads: Reads[Wishlist] = (
-    (JsPath \ "name").read[String](minLength[String](1))
+    (JsPath \ "id").read[String](minLength[String](1))
       .and((JsPath \ "owner").read[String](minLength[String](1)))
       .and((JsPath \ "title").read[String](minLength[String](1)))
       .and((JsPath \ "items").read[Seq[WishlistItem]])

@@ -1,3 +1,5 @@
+package com.sap.yaas.wishlist.util
+
 import java.net.URI
 import javax.inject._
 
@@ -8,9 +10,9 @@ import play.api._
 import play.api.http.DefaultHttpErrorHandler
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}
+import play.api.mvc.Results._
 import play.api.mvc._
 import play.api.routing.Router
-import play.api.mvc.Results._
 
 import scala.concurrent._
 
@@ -39,12 +41,18 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
+    println("===== in onServerError =====")
     Future.successful(exception match {
       case e: DocumentExistsException => Conflict(createBody(e))
       case e: UnauthorizedException => Unauthorized(createBody(e))
       case e: ForbiddenException => Forbidden(createBody(e))
       case e: Exception => InternalServerError(createBody(e))
     })
+  }
+
+  override protected def onDevServerError(request: RequestHeader, exception: UsefulException): Future[Result] = {
+    println("===== in onDevServerError =====")
+    onServerError(request, exception)
   }
 
   private def errorTypeForStatus(status: Int): String = {
@@ -71,7 +79,6 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
 
   private def createErrorMessage(status: Int, message: String,
                                  details: List[ErrorDetail] = Nil): JsValue = {
-    import com.sap.yaas.wishlist.util.UriFormat
 
     Json.toJson(ErrorMessage(
       status = status,

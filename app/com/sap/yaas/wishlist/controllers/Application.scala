@@ -47,12 +47,12 @@ class Application @Inject()(documentClient: DocumentClient,
         for {
           token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
             config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
-          result <- documentClient.create(jsonWishlist, token.access_token).map(
+          result[info]   java.lang.Exception: Unexpected response: AhcWSResponse(500, Internal Server Error) <- documentClient.create(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response))
           )
         } yield result
       case JsError(errors) =>
-        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
+        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
     }
   }
 
@@ -62,7 +62,7 @@ class Application @Inject()(documentClient: DocumentClient,
           Logger.debug("wishlist item: " + jsonWishlist)
           Future.successful(Ok)
         case JsError(errors) =>
-          Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
+          Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
     }
   }
 
