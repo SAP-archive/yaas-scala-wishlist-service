@@ -24,12 +24,17 @@ class Application @Inject()(documentClient: DocumentClient,
                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
   def list = (Action andThen ViewActionFilter).async { request =>
-    oauthClient.acquireToken(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
-      Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
-    ).recover({
-      case _ =>
-        throw new RemoteServiceException("Error during token request, please try again.")
-    })
+    (for {
+      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
+                config.getString("yaas.security.client_secret").get, Seq("hybris.document_view"))
+      result <- documentClient.read(getYaasAwareParameters(request), token.access_token)
+    } yield result)
+      .recover({
+        case e: Exception =>
+          Logger.error("An error occured getting the list of wishlists.", e)
+          InternalServerError(e.getMessage)
+      })
+      Future.successful(Ok(Json.toJson("{\"status\": \"ok\"}")))
   }
 
   def create() = (Action andThen ManageActionFilter).async(BodyParsers.parse.json) { request =>
@@ -60,7 +65,7 @@ class Application @Inject()(documentClient: DocumentClient,
   }
 
 
-  def getYaasAwareParameters(request: Request[JsValue]): YaasAwareParameters = {
+  def getYaasAwareParameters(request: Request[_]): YaasAwareParameters = {
     // TODO: validation, currently 500
     new YaasAwareParameters(
       request.headers.get("hybris-tenant").get,

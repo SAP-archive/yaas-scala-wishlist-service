@@ -20,11 +20,37 @@ import play.api.libs.ws._
 import play.api.http.Status._
 
 import scala.concurrent.{ExecutionContext, Future}
+import com.sap.yaas.wishlist.model.Wishlists
 
 class DocumentClient @Inject()(ws: WSClient, config: Configuration)
                               (implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
+  
+  def read(yaasAwareParameters: YaasAwareParameters,
+           token: String): Future[Wishlists] = {
+    val path = List(config.getString("yaas.document.url").get,
+        yaasAwareParameters.hybrisTenant,
+        client,
+        "data",
+        DocumentClient.WISHLIST_PATH).mkString("/")
+    val request: WSRequest = ws.url(path)
+       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
+           "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
+           "Authorization" -> ("Bearer " + token))
+    val futureResponse: Future[WSResponse] = request.get()
+    futureResponse map {
+      response =>
+        response.status match {
+          case OK =>
+            response.json.validate[Wishlists] match {
+              case s: JsSuccess[Wishlists] => s.get
+              case _ => throw new Exception("Could not parse result: " + response.json)
+            }
+          case _ => throw new Exception("Unexpected response: " + response)
+        }
+    }
+  }
 
   def create(yaasAwareParameters: YaasAwareParameters,
              wishlist: Wishlist, token: String): Future[ResourceLocation] = {
