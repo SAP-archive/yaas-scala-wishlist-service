@@ -2,7 +2,7 @@ package com.sap.yaas.wishlist.security
 
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 import com.sap.yaas.wishlist.model.YaasAwareParameters
 
 /**
@@ -18,6 +18,7 @@ object YaasActions {
 
   private[this] object YaasActionBuilder extends ActionBuilder[Request] {
     // TODO check if yaas required parameters are set?
+    implicit val ec = executionContext
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]) =
       block(request).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
   }
