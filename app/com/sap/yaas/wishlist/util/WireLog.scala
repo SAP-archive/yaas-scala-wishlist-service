@@ -9,12 +9,12 @@
  * Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with hybris.
  */
-package com.sap.yaas.wishlist.controllers
+package com.sap.yaas.wishlist.util
 
 import play.api.Logger
 import play.api.mvc._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 case class WireLog[A](action: Action[A])(implicit ec: ExecutionContext) extends Action[A] {
 

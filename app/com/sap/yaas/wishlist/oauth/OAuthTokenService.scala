@@ -13,16 +13,18 @@ package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
 
-import com.sap.yaas.wishlist.model.{ OAuthToken, OAuthTokenError }
+import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
+import com.sap.yaas.wishlist.util.YaasLogger
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class OAuthTokenService @Inject() (configuration: Configuration, ws: WSClient)(implicit context: ExecutionContext) extends OAuthTokenProvider {
 
   val baseUri = configuration.getString("yaas.security.oauth_url").get
+  val Logger = YaasLogger(this.getClass)
 
   def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"

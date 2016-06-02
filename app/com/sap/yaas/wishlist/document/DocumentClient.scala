@@ -14,22 +14,23 @@ package com.sap.yaas.wishlist.document
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.Wishlist._
-import com.sap.yaas.wishlist.model.{ ResourceLocation, Wishlist, YaasAwareParameters }
+import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParameters}
 import play.api.Configuration
 import play.api.http.Status._
-import play.api.libs.json.{ JsSuccess, Json }
+import play.api.libs.json.{JsSuccess, Json}
 import play.api.libs.ws._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern.CircuitBreaker
 import akka.actor.ActorSystem
+import com.sap.yaas.wishlist.util.YaasLogger
+
 import scala.concurrent.duration._
-import play.api.Logger
-import play.api.libs.json.JsValue
 
 class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
+  val Logger = YaasLogger(this.getClass)
 
   val breaker =
     new CircuitBreaker(system.scheduler,
