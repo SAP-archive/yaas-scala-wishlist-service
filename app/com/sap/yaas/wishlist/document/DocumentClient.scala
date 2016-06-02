@@ -14,35 +14,33 @@ package com.sap.yaas.wishlist.document
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.Wishlist._
-import com.sap.yaas.wishlist.model.{ResourceLocation, Wishlist, YaasAwareParameters}
+import com.sap.yaas.wishlist.model.{ ResourceLocation, Wishlist, YaasAwareParameters }
 import play.api.Configuration
 import play.api.http.Status._
-import play.api.libs.json.{JsSuccess, Json}
+import play.api.libs.json.{ JsSuccess, Json }
 import play.api.libs.ws._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 import akka.pattern.CircuitBreaker
 import akka.actor.ActorSystem
 import scala.concurrent.duration._
 import play.api.Logger
 import play.api.libs.json.JsValue
 
-class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: ActorSystem)
-                              (implicit context: ExecutionContext) {
+class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
-  
+
   val breaker =
     new CircuitBreaker(system.scheduler,
       maxFailures = 5,
       callTimeout = 2.seconds,
       resetTimeout = 1.minute).onOpen(notifyMeOnOpen())
- 
+
   def notifyMeOnOpen(): Unit =
     Logger.warn("My CircuitBreaker is now open, and will not close for one minute")
 
-  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
-                  (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -73,14 +71,12 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       client,
       "data",
       DocumentClient.WISHLIST_PATH,
-      wishlist.id
-    ).mkString("/")
+      wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
         "hybris-hop" -> yaasAwareParameters.hybrisHop.toString,
-        "Authorization" -> ("Bearer " + token)
-        // ContentType set by Play
-      )
+        "Authorization" -> ("Bearer " + token) // ContentType set by Play
+        )
     // timeout set by Play: play.ws.timeout.connection
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(request.post(Json.toJson(wishlist)))
     futureResponse map { response =>

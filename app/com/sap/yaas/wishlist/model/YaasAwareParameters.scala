@@ -14,10 +14,10 @@ package com.sap.yaas.wishlist.model
 import play.api.mvc.Request
 
 case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
-                               hybrisScopes: String,
-                               hybrisUser: Option[String],
-                               hybrisRequestId: Option[String],
-                               hybrisHop: Int = 1) {
+    hybrisScopes: String,
+    hybrisUser: Option[String],
+    hybrisRequestId: Option[String],
+    hybrisHop: Int = 1) {
   val asSeq: Seq[(String, String)] = Seq("hybris-tenant" -> hybrisTenant, "hybris-client" -> hybrisClient, "hybrisHop" -> hybrisHop.toString) ++
     (if (!hybrisUser.isEmpty) Seq("hybrisUser" -> hybrisUser.get) else Seq()) ++
     (if (!hybrisRequestId.isEmpty) Seq("hybrisRequestId" -> hybrisRequestId.get) else Seq())

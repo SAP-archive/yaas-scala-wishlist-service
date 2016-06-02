@@ -17,12 +17,12 @@ import play.api.mvc._
 import scala.concurrent.Future
 
 /**
-  * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
-  * Request to be a YaasRequest that holds a context.
-  * ActionBuilder does not allow you to refine the type. ActionTransformer does not allow you put code "around" the invoke.
-  * So now we need to get the parameters out of the request twice, which is annoying.
-  * TODO Try alternative implementation with Action with YaasActionFunction
-  */
+ * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
+ * Request to be a YaasRequest that holds a context.
+ * ActionBuilder does not allow you to refine the type. ActionTransformer does not allow you put code "around" the invoke.
+ * So now we need to get the parameters out of the request twice, which is annoying.
+ * TODO Try alternative implementation with Action with YaasActionFunction
+ */
 object YaasActions {
 
   val YaasAction = YaasActionBuilder andThen YaasActionTransformer

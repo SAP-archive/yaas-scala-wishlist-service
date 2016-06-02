@@ -13,14 +13,14 @@ package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
 
-import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
+import com.sap.yaas.wishlist.model.{ OAuthToken, OAuthTokenError }
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.ws.WSClient
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
-class OAuthTokenService @Inject()(configuration: Configuration, ws: WSClient)(implicit context: ExecutionContext) extends OAuthTokenProvider {
+class OAuthTokenService @Inject() (configuration: Configuration, ws: WSClient)(implicit context: ExecutionContext) extends OAuthTokenProvider {
 
   val baseUri = configuration.getString("yaas.security.oauth_url").get
 
@@ -46,8 +46,7 @@ class OAuthTokenService @Inject()(configuration: Configuration, ws: WSClient)(im
               response.json.validate[OAuthTokenError]
                 .fold(_ => throw new Exception("parse json failed on failure"),
                   s => throw new TokenErrorException(s))
-          }
-      )
+          })
   }
 
   def invalidateToken: Unit = {

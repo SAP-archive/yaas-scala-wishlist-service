@@ -16,11 +16,11 @@ import java.net.URI
 import play.api.libs.json.Json
 
 /**
-  * Provides error information for a request.
-  * Defined in https://api.yaas.io/patterns/v1/schema-error-message.json.
-  */
+ * Provides error information for a request.
+ * Defined in https://api.yaas.io/patterns/v1/schema-error-message.json.
+ */
 case class ErrorMessage(status: Int, `type`: String, message: String, details: Seq[ErrorDetail],
-                        moreInfo: URI)
+  moreInfo: URI)
 
 object ErrorMessage {
 

@@ -14,14 +14,13 @@ package com.sap.yaas.wishlist.controllers
 import play.api.Logger
 import play.api.mvc._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.{ ExecutionContext, Future }
 
 case class WireLog[A](action: Action[A])(implicit ec: ExecutionContext) extends Action[A] {
 
   /* All our requests are JSON */
   lazy val parser = action.parser
   val wireLogger: Logger = Logger("yaas.wishlist.wirelog")
-
 
   def apply(request: Request[A]): Future[Result] = {
     wireLogger.info("=== REQUEST ===\n")
@@ -33,7 +32,6 @@ case class WireLog[A](action: Action[A])(implicit ec: ExecutionContext) extends 
         wireLogger.info(result.header.headers.mkString("\n"))
         // TODO log response body!!
         result
-      }
-    )
+      })
   }
 }
