@@ -12,12 +12,11 @@
 package com.sap.yaas.wishlist.controllers
 
 import com.google.inject.Inject
-import com.sap.yaas.wishlist.document.{DocumentClient, DocumentExistsException}
+import com.sap.yaas.wishlist.document.DocumentClient
 import com.sap.yaas.wishlist.model.{Wishlist, WishlistItem}
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import com.sap.yaas.wishlist.security.YaasActions._
 import com.sap.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter}
-import com.sap.yaas.wishlist.service.RemoteServiceException
 import play.api.libs.json.{JsError, JsResult, JsSuccess, Json, _}
 import play.api.mvc._
 import play.api.{Configuration, Logger}
@@ -32,10 +31,7 @@ class Application @Inject()(documentClient: DocumentClient,
     oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
       config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj")).map(token =>
       Ok(Json.toJson(WishlistItem.dummyItem) + " + " + token.access_token)
-    ).recover({
-      case _ =>
-        throw new RemoteServiceException("Error during token request, please try again.")
-    })
+    )
   }
 
   def create(): Action[JsValue] = (YaasAction andThen ManageActionFilter).async(BodyParsers.parse.json) { request =>
@@ -45,19 +41,13 @@ class Application @Inject()(documentClient: DocumentClient,
       case wishlistOpt: JsSuccess[Wishlist] =>
         Logger.debug("wishlist: " + jsresult.get)
 
-        (for {
+        for {
           token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
             config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
           result <- documentClient.create(wishlistOpt.get, token.access_token).map(
             response => Ok(Json.toJson(response))
           )
-        } yield result)
-          .recover({
-            case e: DocumentExistsException => Conflict
-            case e: Exception =>
-              Logger.error("Unexpected error while creating a wishlist", e)
-              InternalServerError(e.getMessage)
-          })
+        } yield result
       case error: JsError =>
         Logger.debug("Errors: " + JsError.toJson(error).toString())
         Future.successful(BadRequest)

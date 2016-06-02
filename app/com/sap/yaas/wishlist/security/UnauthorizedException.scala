@@ -9,6 +9,6 @@
  * Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with hybris.
  */
-package com.sap.yaas.wishlist.service
+package com.sap.yaas.wishlist.security
 
-class RemoteServiceException(msg: String) extends Exception(msg)
+class UnauthorizedException extends Exception

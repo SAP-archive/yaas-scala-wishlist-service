@@ -35,10 +35,10 @@ class BasicAuthGlobalFilter @Inject()(config: Configuration)(implicit context: E
             })) {
               nextFilter(requestHeader)
             } else {
-              Future.successful(Unauthorized)
+              throw new UnauthorizedException
             }
           case None =>
-            Future.successful(Unauthorized)
+            throw new UnauthorizedException
         }
       }
       case _ => nextFilter(requestHeader)
