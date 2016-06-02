@@ -28,14 +28,12 @@ class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper,
                             config: Configuration)(implicit context: ExecutionContext) extends Controller {
 
-  def getWishlists(pageNumber: Int, pageSize: Int): Action[AnyContent] = ViewAction.async { request =>
+  def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
-    val pageNo = if (pageNumber > 0) Some(pageNumber) else None
-    val pageS = if (pageSize > 0) Some(pageSize) else None
     for {
       token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
                 config.getString("yaas.security.client_secret").get, Seq("hybris.tenant=altoconproj hybris.document_view"))
-      result <- documentClient.getWishlists(token.access_token, pageNo, pageS).map(response =>
+      result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response))
       )
     } yield result
