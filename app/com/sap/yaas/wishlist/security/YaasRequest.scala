@@ -9,15 +9,9 @@
  * Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with hybris.
  */
-package com.sap.yaas.wishlist.model
+package com.sap.yaas.wishlist.security
 
-import play.api.libs.json.Json
+import com.sap.yaas.wishlist.model.YaasAwareParameters
+import play.api.mvc.{Request, WrappedRequest}
 
-case class ResourceLocation(id: String, link: String)
-
-//TODO: Json format for java.net.URI
-
-object ResourceLocation {
-  implicit val ResourceLocationFormat = Json.format[ResourceLocation]
-
-}
+case class YaasRequest[A](val yaasContext: YaasAwareParameters, request: Request[A]) extends WrappedRequest[A](request)
