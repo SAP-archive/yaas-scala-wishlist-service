@@ -30,7 +30,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
 
   val client: String = config.getString("yaas.client").get
   
-  def getWishlists(token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
         yaasAwareParameters.hybrisTenant,
         client,
@@ -39,12 +39,13 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
     val request: WSRequest = ws.url(path)
        .withHeaders("hybris-requestId" -> yaasAwareParameters.hybrisRequestId.getOrElse(""),
            "hybris-hop" -> yaasAwareParameters.hybrisHop.toString(),
-           "Authorization" -> ("Bearer " + token))
-    val futureResponse: Future[WSResponse] = request.get()
+           "Authorization" -> ("Bearer " + token)).withQueryString("totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
+    val futureResponse: Future[WSResponse] = pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get()
     futureResponse map {
       response =>
         response.status match {
           case OK =>
+            val totalCount = response.header("hybris-count").getOrElse("")
             response.json.validate[Wishlists] match {
               case s: JsSuccess[Wishlists] => s.get
               case _ => throw new Exception("Could not parse result: " + response.json)
