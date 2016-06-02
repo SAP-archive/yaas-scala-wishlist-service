@@ -28,7 +28,10 @@ import play.api.test._
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
   val wishlistItem = new WishlistItem("product", 4, Some("note"), None)
+  val wishlistInvalidItem = new WishlistItem("", 0, Some("note"), None)
   val wishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem))
+  val invalidWishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem, wishlistInvalidItem))
+
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
 
@@ -105,6 +108,17 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val request = FakeRequest(POST, "/wishlists")
         .withHeaders(defaultHeaders: _*)
         .withBody(Json.toJson(wishlist))
+
+      inside(route(request)) {
+        case Some(result) =>
+          status(result) mustBe CONFLICT
+      }
+    }
+
+    "return a 400 for an invalid wishlist" in {
+      val request = FakeRequest(POST, "/")
+        .withHeaders(defaultHeaders: _*)
+        .withBody(Json.toJson(invalidWishlist))
 
       inside(route(request)) {
         case Some(result) =>
