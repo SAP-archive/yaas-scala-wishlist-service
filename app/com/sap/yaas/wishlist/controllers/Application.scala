@@ -56,16 +56,13 @@ class Application @Inject()(documentClient: DocumentClient,
     }
   }
 
-  def update(wishlistId: String): Action[JsValue] = ManageAction(BodyParsers.parse.json) { request =>
-    val jsresult: JsResult[WishlistItem] = request.body.validate[WishlistItem]
-    jsresult match {
-      case _: JsSuccess[WishlistItem] =>
-        Logger.debug("wishlist item: " + jsresult.get)
-        Ok
-      case error: JsError =>
-        Logger.debug("Errors: " + JsError.toJson(error).toString())
-        // TODO replace with validation
-        throw new IllegalArgumentException
+  def update(wishlistId: String): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
+      request.body.validate[Wishlist] match {
+        case JsSuccess(jsonWishlist, _) =>
+          Logger.debug("wishlist item: " + jsonWishlist)
+          Future.successful(Ok)
+        case JsError(errors) =>
+          Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist) })))
     }
   }
 

@@ -11,16 +11,76 @@
  */
 package com.sap.yaas.wishlist.model
 
-import play.api.libs.json.Json
 
+/*
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "title":"Wishlist",
+  "type":"object",
+  "properties":
+  {
+    "id":
+    {
+      "type":"string"
+    },
+    "url":
+    {
+      "type":"string",
+      "format":"uri"
+    },
+    "owner":
+    {
+      "type":"string",
+      "pattern":"^.+"
+    },
+    "title":
+    {
+      "type":"string",
+      "pattern":"^.+"
+    },
+    "description":
+    {
+        "$ref" : "https://api.yaas.io/patterns/v1/schema-localized.json"
+    },
+    "createdAt":
+    {
+      "type":"string",
+      "format":"date-time"
+    },
+    "items":
+    {
+      "type":"array",
+      "items":
+      {
+        "$ref":"wishlistItem"
+      }
+    }
+  },
+  "required":["id","owner","title"]
+}
+
+ */
 case class Wishlist(id: String, owner: String, title: String,
-                    items: List[WishlistItem], url: Option[String] = None)
+                    items: Seq[WishlistItem], url: Option[String] = None)
 
 //TODO: Json format for java.net.URI
 
 object Wishlist {
-
-  implicit val WishlistFormat = Json.format[Wishlist]
-
   type Wishlists = Seq[Wishlist]
+
+  import play.api.libs.json._
+  import play.api.libs.json.Reads._
+  import play.api.libs.functional.syntax._
+
+
+  implicit val wishlistReads: Reads[Wishlist] = (
+    (JsPath \ "name").read[String](minLength[String](1))
+      .and((JsPath \ "owner").read[String](minLength[String](1)))
+      .and((JsPath \ "title").read[String](minLength[String](1)))
+      .and((JsPath \ "items").read[Seq[WishlistItem]])
+      .and((JsPath \ "url").readNullable[String])
+    )(Wishlist.apply _)
+
+  implicit val wishlistWrites = Json.writes[Wishlist]
+
 }

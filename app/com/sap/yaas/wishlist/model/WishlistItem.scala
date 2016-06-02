@@ -11,10 +11,6 @@
  */
 package com.sap.yaas.wishlist.model
 
-import play.api.libs.json._
-import play.api.libs.json.Reads._
-import play.api.libs.functional.syntax._
-
 
 /*
 {
@@ -54,6 +50,11 @@ case class WishlistItem(product: String,
                         createdAt: Option[String])
 
 object WishlistItem {
+  import play.api.libs.json._
+  import play.api.libs.json.Reads._
+  import play.api.libs.functional.syntax._
+
+
   implicit val wishlistItemReads: Reads[WishlistItem] = (
     (JsPath \ "product").read[String](minLength[String](1))
       .and((JsPath \ "amount").read[Int](min(1)))
