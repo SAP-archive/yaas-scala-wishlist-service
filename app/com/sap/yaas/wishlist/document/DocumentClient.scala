@@ -30,7 +30,7 @@ import scala.concurrent.duration._
 class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
-  val Logger = YaasLogger(this.getClass)
+  val logger = YaasLogger(this.getClass)
 
   val breaker =
     new CircuitBreaker(system.scheduler,
@@ -41,10 +41,10 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
         .onOpen(notifyOnOpen())
 
   def notifyOnHalfOpen(): Unit =
-    Logger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
+    logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
 
   def notifyOnOpen(): Unit =
-    Logger.warn("CircuitBreaker is now open, and will not close for one minute")
+    logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
   def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
