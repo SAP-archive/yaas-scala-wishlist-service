@@ -19,10 +19,29 @@ import play.api.http.Status._
 import play.api.libs.ws.WSClient
 
 import scala.concurrent.{ ExecutionContext, Future }
+import akka.pattern.CircuitBreaker
+import akka.actor.ActorSystem
+import scala.concurrent.duration._
+import play.api.Logger
+import play.api.libs.ws.WSResponse
 
-class OAuthTokenService @Inject() (configuration: Configuration, ws: WSClient)(implicit context: ExecutionContext) extends OAuthTokenProvider {
+class OAuthTokenService @Inject() (config: Configuration, ws: WSClient, system: ActorSystem)(implicit context: ExecutionContext) extends OAuthTokenProvider {
 
-  val baseUri = configuration.getString("yaas.security.oauth_url").get
+  val baseUri = config.getString("yaas.security.oauth_url").get
+  
+  val breaker =
+    new CircuitBreaker(system.scheduler,
+      maxFailures = config.getInt("yaas.security.oauth_max_failures").getOrElse(5),
+      callTimeout = Duration(config.getMilliseconds("yaas.security.oauth_call_timeout").getOrElse(10000l),MILLISECONDS),
+      resetTimeout = Duration(config.getMilliseconds("yaas.security.oauth_reset_timeout").getOrElse(60000l),MILLISECONDS))
+        .onHalfOpen(notifyOnHalfOpen())
+        .onOpen(notifyOnOpen())
+
+  def notifyOnHalfOpen(): Unit =
+    Logger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
+
+  def notifyOnOpen(): Unit =
+    Logger.warn("CircuitBreaker is now open, and will not close for one minute")
 
   def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
@@ -30,10 +49,11 @@ class OAuthTokenService @Inject() (configuration: Configuration, ws: WSClient)(i
       "client_id" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "scope" -> scopes)
-    ws.url(baseUri + "/token")
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(ws.url(baseUri + "/token")
       .withHeaders(hdrs)
-      .post(body)
-      .map(
+      .post(body)))
+    
+    futureResponse.map(
         response =>
           response.status match {
             case OK =>
@@ -52,6 +72,15 @@ class OAuthTokenService @Inject() (configuration: Configuration, ws: WSClient)(i
   def invalidateToken: Unit = {
 
   }
+  
+  def failEarly(wsresponse: Future[WSResponse]): Future[WSResponse] =
+    wsresponse.map(
+      response =>
+        response.status match {
+          /* fail ws request if we get a 503 */
+          case SERVICE_UNAVAILABLE | GATEWAY_TIMEOUT | INSUFFICIENT_STORAGE => throw new Exception()
+          case _ => response
+        })
 }
 
 object OAuthTokenService {
