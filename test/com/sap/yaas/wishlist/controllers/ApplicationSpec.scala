@@ -35,7 +35,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT));
 
-  override def beforeAll() = {
+  override def beforeAll(): Unit = {
     val wiremockUrl = s"http://localhost:$WIREMOCK_PORT"
     sys.props ++= Map(YAAS_DOCUMENT_URL -> wiremockUrl,
       YAAS_SECURITY_OAUTH_URL -> wiremockUrl,
@@ -54,7 +54,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     super.beforeAll()
   }
 
-  override def afterAll() = {
+  override def afterAll(): Unit = {
     sys.props -= YAAS_DOCUMENT_URL
     sys.props -= YAAS_SECURITY_OAUTH_URL
     sys.props -= YAAS_CLIENT

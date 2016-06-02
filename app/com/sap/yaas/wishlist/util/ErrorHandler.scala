@@ -76,7 +76,11 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
 
   private def createBody(exception: ConstraintViolationException): JsValue = {
     // TODO render ErrorDetails
-    createErrorMessage(BAD_REQUEST, "Invalid arguments")
+    val details = exception.errors.flatMap(error =>
+      error._2.map(validationError =>
+        createErrorDetail(Some(error._1), "validation_error", validationError.message)
+      ))
+    createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
   }
 
   private def createBody(exception: ForbiddenException): JsValue = {
@@ -90,18 +94,12 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   private def createErrorMessage(status: Int, message: String,
-                                 details: List[ErrorDetail] = Nil): JsValue = {
-
-    Json.toJson(ErrorMessage(
-      status = status,
-      errorTypeForStatus(status),
-      message = message,
-      moreInfo = baseUri,
-      details = details))
+                                 details: Seq[ErrorDetail] = Nil): JsValue = {
+    Json.toJson(ErrorMessage(status, errorTypeForStatus(status), message, details, baseUri))
   }
 
-  private def createErrorDetail(field: Option[String], `type`: String, message: String): ErrorDetail = {
-    ErrorDetail(field, `type` = `type`, message = message, baseUri)
+  private def createErrorDetail(fieldOpt: Option[String], `type`: String, message: String): ErrorDetail = {
+    ErrorDetail(fieldOpt, `type`, message, baseUri)
   }
 }
 
