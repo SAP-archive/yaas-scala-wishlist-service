@@ -5,11 +5,26 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>API Console</title>
   <link href="styles/api-console-light-theme.css" rel="stylesheet" class="theme">
+  <link href="styles/yaas-custom.css" rel="stylesheet">
+  <link type="image/png" rel="icon" sizes="192x192" href="img/favicon-192x192.png">
+  <link type="image/png" rel="icon" sizes="160x160" href="img/favicon-160x160.png">
+  <link type="image/png" rel="icon" sizes="96x96" href="img/favicon-96x96.png">
+  <link type="image/png" rel="icon" sizes="16x16" href="img/favicon-16x16.png">
+  <link type="image/png" rel="icon" sizes="32x32" href="img/favicon-32x32.png">
 </head>
 <body ng-app="ramlConsoleApp" ng-cloak class="raml-console-body">
   <raml-initializer></raml-initializer>
-  <script src="scripts/api-console-vendor.js"></script>
-  <script src="scripts/api-console.js"></script>
+  <footer class="yaas-footer">
+    <div class="app-version exhibit"></div>
+    <div class="mule-logo exhibit">
+      <div><img src="img/powered-by-mulesoft.png"></div>
+      <div><a href="http://www.MuleSoft.org" target="_blank">Powered by MuleSoft for RAML.</a></div>
+      <div>Copyright (c) 2016 MuleSoft, INC.</div>
+    </div>
+  </footer>
+  <script src="scripts/api-console-vendor.min.js"></script>
+  <script src="scripts/api-console.min.js"></script>
+  <script src="scripts/yaas-custom.js"></script>
   <script>
     $.noConflict();
   </script>
