@@ -81,6 +81,6 @@ object Wishlist {
       .and((JsPath \ "url").readNullable[String])
     )(Wishlist.apply _)
 
-  implicit val wishlistWrites = Json.writes[WishlistItem]
+  implicit val wishlistWrites = Json.writes[Wishlist]
 
 }
