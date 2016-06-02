@@ -23,10 +23,24 @@ import play.api.mvc._
 import play.api.{Configuration, Logger}
 
 import scala.concurrent.{ExecutionContext, Future}
+import akka.pattern.CircuitBreaker
+import scala.concurrent.duration._
+import akka.actor.ActorSystem
+
 
 class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper,
-                            config: Configuration)(implicit context: ExecutionContext) extends Controller {
+                            config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) extends Controller {
+  
+   val breaker =
+    new CircuitBreaker(system.scheduler,
+      maxFailures = 5,
+      callTimeout = 10.seconds,
+      resetTimeout = 1.minute).onOpen(notifyMeOnOpen())
+ 
+  def notifyMeOnOpen(): Unit =
+    Logger.warn("My CircuitBreaker is now open, and will not close for one minute")
+
 
   def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
