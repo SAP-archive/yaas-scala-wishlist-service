@@ -26,8 +26,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration)
 
   val client: String = config.getString("yaas.client").get
 
-  def create(yaasAwareParameters: YaasAwareParameters,
-             wishlist: Wishlist, token: String): Future[ResourceLocation] = {
+  def create(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
      client,

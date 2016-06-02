@@ -17,12 +17,14 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
                                hybrisScopes: String,
                                hybrisUser: Option[String],
                                hybrisRequestId: Option[String],
-                               hybrisHop: Int = 1)
+                               hybrisHop: Int = 1) {
+  val asSeq: Seq[(String, String)] = Seq("hybris-tenant" -> hybrisTenant, "hybris-client" -> hybrisClient, "hybrisHop" -> hybrisHop.toString) ++
+    (if (!hybrisUser.isEmpty) Seq("hybrisUser" -> hybrisUser.get) else Seq()) ++
+    (if (!hybrisRequestId.isEmpty) Seq("hybrisRequestId" -> hybrisRequestId.get) else Seq())
+}
 
 object YaasAwareParameters {
-
-  def getYaasAwareParameters[A](request: Request[A]): YaasAwareParameters = {
-    // TODO: validation, currently 500
+  def apply[A](request: Request[A]) = {
     new YaasAwareParameters(
       request.headers.get("hybris-tenant").get,
       request.headers.get("hybris-client").get,
@@ -31,5 +33,4 @@ object YaasAwareParameters {
       request.headers.get("hybris-requestId"),
       request.headers.get("hybris-hop").getOrElse("1").toInt)
   }
-  
 }
