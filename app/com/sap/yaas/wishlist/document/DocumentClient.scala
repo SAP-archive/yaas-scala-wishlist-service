@@ -17,19 +17,20 @@ import com.sap.yaas.wishlist.model.Wishlist._
 import com.sap.yaas.wishlist.model.{ ResourceLocation, Wishlist, YaasAwareParameters, UpdateResource}
 import play.api.Configuration
 import play.api.http.Status._
-import play.api.libs.json.{ JsSuccess, Json }
+import play.api.libs.json.{JsSuccess, Json}
 import play.api.libs.ws._
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 import akka.pattern.CircuitBreaker
 import akka.actor.ActorSystem
+import com.sap.yaas.wishlist.util.YaasLogger
+
 import scala.concurrent.duration._
-import play.api.Logger
-import play.api.libs.json.JsValue
 
 class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
+  val logger = YaasLogger(this.getClass)
 
   val breaker =
     new CircuitBreaker(system.scheduler,
@@ -40,10 +41,10 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
         .onOpen(notifyOnOpen())
 
   def notifyOnHalfOpen(): Unit =
-    Logger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
+    logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
 
   def notifyOnOpen(): Unit =
-    Logger.warn("CircuitBreaker is now open, and will not close for one minute")
+    logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
   def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,

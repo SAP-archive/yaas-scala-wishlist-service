@@ -53,7 +53,6 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    println("===== in onServerError =====")
     Future.successful(exception match {
       case e: DocumentExistsException => Conflict(createBody(e))
       case e: UnauthorizedException => Unauthorized(createBody(e))
@@ -64,7 +63,6 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   override protected def onDevServerError(request: RequestHeader, exception: UsefulException): Future[Result] = {
-    println("===== in onDevServerError =====")
     onServerError(request, exception)
   }
 

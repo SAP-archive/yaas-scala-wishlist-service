@@ -13,7 +13,8 @@ package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
 
-import com.sap.yaas.wishlist.model.{ OAuthToken, OAuthTokenError }
+import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
+import com.sap.yaas.wishlist.util.YaasLogger
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.ws.WSClient
@@ -22,13 +23,13 @@ import scala.concurrent.{ ExecutionContext, Future }
 import akka.pattern.CircuitBreaker
 import akka.actor.ActorSystem
 import scala.concurrent.duration._
-import play.api.Logger
 import play.api.libs.ws.WSResponse
 
 class OAuthTokenService @Inject() (config: Configuration, ws: WSClient, system: ActorSystem)(implicit context: ExecutionContext) extends OAuthTokenProvider {
 
   val baseUri = config.getString("yaas.security.oauth_url").get
-  
+  val logger = YaasLogger(this.getClass)
+
   val breaker =
     new CircuitBreaker(system.scheduler,
       maxFailures = config.getInt("yaas.security.oauth_max_failures").getOrElse(5),
@@ -38,10 +39,10 @@ class OAuthTokenService @Inject() (config: Configuration, ws: WSClient, system: 
         .onOpen(notifyOnOpen())
 
   def notifyOnHalfOpen(): Unit =
-    Logger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
+    logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
 
   def notifyOnOpen(): Unit =
-    Logger.warn("CircuitBreaker is now open, and will not close for one minute")
+    logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
   def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
