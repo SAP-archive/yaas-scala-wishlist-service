@@ -22,7 +22,7 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
   val asSeq: Seq[(String, String)] = Seq("hybris-tenant" -> hybrisTenant,
     "hybris-client" -> hybrisClient,
     "hybris-hop" -> hybrisHop.toString) ++
-    (if (!hybrisUser.isEmpty) Seq("hybris-ser" -> hybrisUser.get) else Seq()) ++
+    (if (!hybrisUser.isEmpty) Seq("hybris-user" -> hybrisUser.get) else Seq()) ++
     (if (!hybrisRequestId.isEmpty) Seq("hybris-request-id" -> hybrisRequestId.get) else Seq())
 }
 
@@ -31,7 +31,7 @@ object YaasAwareParameters {
     new YaasAwareParameters(
       request.headers.get("hybris-tenant").getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
       request.headers.get("hybris-client").getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
-      request.headers.get("scope").getOrElse(""),
+      request.headers.get("hybris-scopes").getOrElse(""),
       request.headers.get("hybris-user"),
       request.headers.get("hybris-request-id"),
       request.headers.get("hybris-hop").getOrElse("1").toInt)
