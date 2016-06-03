@@ -15,7 +15,7 @@ import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.DocumentClient
 import com.sap.yaas.wishlist.model.Wishlist
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
-import com.sap.yaas.wishlist.security.YaasActions
+import com.sap.yaas.wishlist.security.{Credentials, YaasActions}
 import com.sap.yaas.wishlist.service.ConstraintViolationException
 import com.sap.yaas.wishlist.util.{ErrorMapper, YaasLogger}
 import play.api.Configuration
@@ -29,28 +29,29 @@ class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
                             config: Configuration, yaasActions: YaasActions)(implicit context: ExecutionContext) extends Controller {
 
-  val Logger = YaasLogger(this.getClass)
+  val logger = YaasLogger(this.getClass)
+
+  val credentials = Credentials(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get)
 
   import yaasActions._
 
-  def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
+  def getAll(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.document_view"))
-      result <- documentClient.getWishlists(token.access_token, pageNumber, pageSize).map(response =>
+      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_view"))
+      result <- documentClient.getAll(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response)))
     } yield result
   }
+
 
   def create(): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
     implicit val yaasContext = request.yaasContext
     request.body.validate[Wishlist] match {
       case JsSuccess(jsonWishlist, _) =>
-        Logger.debug("wishlist: " + jsonWishlist)
+        logger.debug("wishlist: " + jsonWishlist)
         for {
-          token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-            config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+          token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
           result <- documentClient.create(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response)))
         } yield result
@@ -63,10 +64,9 @@ class Application @Inject()(documentClient: DocumentClient,
     implicit val yaasContext = request.yaasContext
     request.body.validate[Wishlist] match {
       case JsSuccess(jsonWishlist, _) =>
-        Logger.debug("wishlist item: " + jsonWishlist)
+        logger.debug("wishlist item: " + jsonWishlist)
         for {
-          token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-            config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+          token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
           result <- documentClient.update(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response)))
         } yield result
@@ -78,19 +78,17 @@ class Application @Inject()(documentClient: DocumentClient,
   def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.document_manage"))
+      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
       result <- documentClient.delete(wishlistId, token.access_token).map(response =>
         NoContent)
     } yield result
   }
 
-  def getWishlist(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
+  def get(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(config.getString("yaas.security.client_id").get,
-        config.getString("yaas.security.client_secret").get, Seq("hybris.document_view"))
-      result <- documentClient.getWishlist(wishlistId, token.access_token).map(response =>
+      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_view"))
+      result <- documentClient.get(wishlistId, token.access_token).map(response =>
         Ok(Json.toJson(response)))
     } yield result
   }

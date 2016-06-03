@@ -16,11 +16,13 @@ import javax.inject.Inject
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
 import com.sap.yaas.wishlist.model.Wishlist._
-import com.sap.yaas.wishlist.model.{ResourceLocation, UpdateResource, Wishlist, YaasAwareParameters}
-import com.sap.yaas.wishlist.util.YaasLogger
+import com.sap.yaas.wishlist.model._
+import com.sap.yaas.wishlist.util.WSHelper._
+import com.sap.yaas.wishlist.util.{WSHelper, YaasLogger}
 import play.api.Configuration
+import play.api.http.HeaderNames
 import play.api.http.Status._
-import play.api.libs.json.{JsSuccess, Json}
+import play.api.libs.json.{Format, JsSuccess, Json}
 import play.api.libs.ws._
 
 import scala.concurrent.duration._
@@ -45,8 +47,8 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   def notifyOnOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
-  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
-                  (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+  def getAll(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
+            (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -54,11 +56,11 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       DocumentClient.WISHLIST_PATH).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
-      "Authorization" -> ("Bearer " + token)).withQueryString(
+      HeaderNames.AUTHORIZATION -> ("Bearer " + token)).withQueryString(
       "totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
 
     val futureResponse: Future[WSResponse] =
-      breaker.withCircuitBreaker(failEarly(pageNumber.fold(request)(
+      breaker.withCircuitBreaker(failFast(pageNumber.fold(request)(
         p => request.withQueryString("pageNumber" -> p.toString())).get))
 
     futureResponse map {
@@ -86,22 +88,13 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders("Authorization" -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.post(Json.toJson(wishlist))))
-    futureResponse map { response =>
-      response.status match {
-        case CREATED => // O
-          response.json.validate[ResourceLocation] match {
-            case s: JsSuccess[ResourceLocation] => s.get
-            case _ => throw new Exception("Could not parse result:" + response.json)
-          }
-        case CONFLICT => throw new DocumentExistsException("Wishlist exists", path)
-        case _ => throw new Exception("Unexpected response status: " + response)
-
-      }
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.post(Json.toJson(wishlist))))
+    futureResponse map {
+      response => checkResponse[ResourceLocation](response)
     }
   }
 
-  def getWishlist(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
+  def get(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -111,17 +104,9 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders("Authorization" -> ("Bearer " + token))
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.get))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.get))
     futureResponse map {
-      response =>
-        response.status match {
-          case OK =>
-            response.json.validate[Wishlist] match {
-              case s: JsSuccess[Wishlist] => s.get
-              case _ => throw new Exception("Could not parse result: " + response.json)
-            }
-          case _ => throw new Exception("Unexpected response status: " + response)
-        }
+      response => checkResponse[Wishlist](response)
     }
   }
 
@@ -136,17 +121,22 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders("Authorization" -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.put(Json.toJson(wishlist))))
-    futureResponse map { response =>
-      response.status match {
-        case OK => // O
-          response.json.validate[UpdateResource] match {
-            case s: JsSuccess[UpdateResource] => s.get
-            case _ => throw new Exception("Could not parse result:" + response.json)
-          }
-        case _ => throw new Exception("Unexpected response status: " + response)
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
+    futureResponse map {
+      response =>
+        checkResponse[UpdateResource](response)
+    }
+  }
 
-      }
+  private def checkResponse[A : Format](response: WSResponse): A = {
+    response.status match {
+      case OK | CREATED =>
+        response.json.validate[A] match {
+          case s: JsSuccess[A] => s.get
+          case _ => throw new Exception("Could not parse result: " + response.json)
+        }
+      case CONFLICT => throw new DocumentExistsException("Wishlist exists")
+      case _ => throw new Exception("Unexpected response status: " + response)
     }
   }
 
@@ -160,26 +150,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders("Authorization" -> ("Bearer " + token))
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(request.delete))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.delete))
     futureResponse map {
       response =>
         response.status match {
-          case NO_CONTENT =>
-            () // empty 
+          case NO_CONTENT => ()
           case NOT_FOUND => throw new NotFoundException("resource not found", path)
           case _ => throw new Exception("Unexpected response status: " + response)
         }
     }
   }
-
-  def failEarly(wsresponse: Future[WSResponse]): Future[WSResponse] =
-    wsresponse.map(
-      response =>
-        response.status match {
-          /* fail ws request if we get a 503 */
-          case SERVICE_UNAVAILABLE | GATEWAY_TIMEOUT | INSUFFICIENT_STORAGE => throw new Exception()
-          case _ => response
-        })
 
 }
 

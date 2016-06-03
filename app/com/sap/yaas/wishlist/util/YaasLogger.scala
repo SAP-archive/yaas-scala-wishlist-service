@@ -12,7 +12,7 @@
 package com.sap.yaas.wishlist.util
 
 import com.sap.yaas.wishlist.model.YaasAwareParameters
-import org.slf4j.{Logger, LoggerFactory}
+import org.slf4j.{Logger, LoggerFactory, MDC}
 
 class YassLogger(underlying: Logger) {
 
@@ -34,7 +34,11 @@ class YassLogger(underlying: Logger) {
     def isDebugEnabled: Boolean = underlying.isDebugEnabled
 
     def debug(msg: String)(implicit context: YaasAwareParameters): Unit =
-      if (underlying.isDebugEnabled) underlying.debug(format(context) + msg)
+      if (underlying.isDebugEnabled) {
+          //MDC.set(context als map)
+          underlying.debug(format(context) + msg)
+          //MDC.clear()
+      }
 
     def debug(msg: String, t: Throwable)(implicit context: YaasAwareParameters): Unit =
       if (underlying.isDebugEnabled) underlying.debug(format(context) + msg, t)

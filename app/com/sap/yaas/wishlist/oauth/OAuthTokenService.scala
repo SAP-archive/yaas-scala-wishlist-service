@@ -16,13 +16,16 @@ import javax.inject.Inject
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
 import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
-import com.sap.yaas.wishlist.util.YaasLogger
+import com.sap.yaas.wishlist.security.Credentials
+import com.sap.yaas.wishlist.util.{WSHelper, YaasLogger}
 import play.api.Configuration
+import play.api.http.{ContentTypes, HeaderNames}
 import play.api.http.Status._
 import play.api.libs.ws.{WSClient, WSResponse}
 
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
+import WSHelper._
 
 class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: ActorSystem)(
   implicit context: ExecutionContext) extends OAuthTokenProvider {
@@ -44,17 +47,17 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
   def notifyOnOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
-  def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
-    val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
+  def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken] = {
+    import credentials._
+    val hdrs = HeaderNames.CONTENT_TYPE -> ContentTypes.FORM
     val body = Map("grant_type" -> Seq(OAuthTokenService.GRANT_TYPE),
       "client_id" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "scope" -> scopes)
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(ws.url(baseUri + "/token")
+    breaker.withCircuitBreaker(failFast(ws.url(baseUri + "/token")
       .withHeaders(hdrs)
       .post(body)))
-
-    futureResponse.map(
+      .map(
       response =>
         response.status match {
           case OK =>
@@ -63,25 +66,15 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
                 s => s)
           case INTERNAL_SERVER_ERROR =>
             throw new Exception(s"Service error ${response.status}: ${response.body}")
-          case default =>
+          case _ =>
             response.json.validate[OAuthTokenError]
               .fold(_ => throw new Exception("parse json failed on failure"),
                 s => throw new TokenErrorException(s))
         })
   }
 
-  def invalidateToken: Unit = {
+  def invalidateToken: Unit = ???
 
-  }
-
-  def failEarly(wsresponse: Future[WSResponse]): Future[WSResponse] =
-    wsresponse.map(
-      response =>
-        response.status match {
-          /* fail ws request if we get a 503 */
-          case SERVICE_UNAVAILABLE | GATEWAY_TIMEOUT | INSUFFICIENT_STORAGE => throw new Exception()
-          case _ => response
-        })
 }
 
 object OAuthTokenService {

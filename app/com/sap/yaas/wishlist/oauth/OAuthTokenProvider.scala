@@ -12,11 +12,12 @@
 package com.sap.yaas.wishlist.oauth
 
 import com.sap.yaas.wishlist.model.OAuthToken
+import com.sap.yaas.wishlist.security.Credentials
 
 import scala.concurrent.Future
 
 trait OAuthTokenProvider {
-  def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken]
+  def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken]
 
   def invalidateToken(): Unit
 }

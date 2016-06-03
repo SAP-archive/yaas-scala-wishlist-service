@@ -9,6 +9,6 @@
  * Information and shall use it only in accordance with the terms of the
  * license agreement you entered into with hybris.
  */
-package com.sap.yaas.wishlist.document
+package com.sap.yaas.wishlist.security
 
-class DocumentExistsException(val message: String) extends Exception(message)
+case class Credentials(clientId: String, clientSecret: String)
