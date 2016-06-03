@@ -155,6 +155,28 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           status(result) mustBe INTERNAL_SERVER_ERROR
       }
     }
+    
+    "call document service multiple times, receiving 500s to open circuit" in {
+      stubFor(get(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"))
+          .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
+          .willReturn(
+              aResponse().withStatus(SERVICE_UNAVAILABLE)
+          )
+      )
+      val request = FakeRequest(GET, WISHLIST_PATH)
+        .withHeaders(defaultHeaders: _*)
+      
+      val max_failures = app.configuration.getInt("yaas.document.max_failures").get
+      for (a <- 1 to (max_failures + 2)) {
+        inside(route(app, request)) {
+          case Some(result) =>
+            if (a <= max_failures)
+              status(result) mustBe SERVICE_UNAVAILABLE
+            else
+              status(result) mustBe INTERNAL_SERVER_ERROR
+        }
+      }
+    }
 
   }
 
