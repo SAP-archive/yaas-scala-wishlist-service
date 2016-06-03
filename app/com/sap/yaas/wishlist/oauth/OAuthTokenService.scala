@@ -13,30 +13,30 @@ package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
 
+import akka.actor.ActorSystem
+import akka.pattern.CircuitBreaker
 import com.sap.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
 import com.sap.yaas.wishlist.util.YaasLogger
 import play.api.Configuration
 import play.api.http.Status._
-import play.api.libs.ws.WSClient
+import play.api.libs.ws.{WSClient, WSResponse}
 
-import scala.concurrent.{ ExecutionContext, Future }
-import akka.pattern.CircuitBreaker
-import akka.actor.ActorSystem
 import scala.concurrent.duration._
-import play.api.libs.ws.WSResponse
+import scala.concurrent.{ExecutionContext, Future}
 
-class OAuthTokenService @Inject() (config: Configuration, ws: WSClient, system: ActorSystem)(implicit context: ExecutionContext) extends OAuthTokenProvider {
+class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: ActorSystem)(
+  implicit context: ExecutionContext) extends OAuthTokenProvider {
 
   val baseUri = config.getString("yaas.security.oauth_url").get
   val logger = YaasLogger(this.getClass)
 
   val breaker =
     new CircuitBreaker(system.scheduler,
-      maxFailures = config.getInt("yaas.security.oauth_max_failures").getOrElse(5),
-      callTimeout = Duration(config.getMilliseconds("yaas.security.oauth_call_timeout").getOrElse(10000l),MILLISECONDS),
-      resetTimeout = Duration(config.getMilliseconds("yaas.security.oauth_reset_timeout").getOrElse(60000l),MILLISECONDS))
-        .onHalfOpen(notifyOnHalfOpen())
-        .onOpen(notifyOnOpen())
+      maxFailures = config.getInt("yaas.security.oauth_max_failures").get,
+      callTimeout = Duration(config.getMilliseconds("yaas.security.oauth_call_timeout").get, MILLISECONDS),
+      resetTimeout = Duration(config.getMilliseconds("yaas.security.oauth_reset_timeout").get, MILLISECONDS))
+      .onHalfOpen(notifyOnHalfOpen())
+      .onOpen(notifyOnOpen())
 
   def notifyOnHalfOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
@@ -46,34 +46,34 @@ class OAuthTokenService @Inject() (config: Configuration, ws: WSClient, system: 
 
   def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
     val hdrs = "Content-Type" -> "application/x-www-form-urlencoded"
-    var body = Map("grant_type" -> Seq(OAuthTokenService.GRANT_TYPE),
+    val body = Map("grant_type" -> Seq(OAuthTokenService.GRANT_TYPE),
       "client_id" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "scope" -> scopes)
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failEarly(ws.url(baseUri + "/token")
       .withHeaders(hdrs)
       .post(body)))
-    
+
     futureResponse.map(
-        response =>
-          response.status match {
-            case OK =>
-              response.json.validate[OAuthToken]
-                .fold(_ => throw new Exception("parse json failed on success"),
-                  s => s)
-            case INTERNAL_SERVER_ERROR =>
-              throw new Exception(s"Service error ${response.status}: ${response.body}")
-            case default =>
-              response.json.validate[OAuthTokenError]
-                .fold(_ => throw new Exception("parse json failed on failure"),
-                  s => throw new TokenErrorException(s))
-          })
+      response =>
+        response.status match {
+          case OK =>
+            response.json.validate[OAuthToken]
+              .fold(_ => throw new Exception("parse json failed on success"),
+                s => s)
+          case INTERNAL_SERVER_ERROR =>
+            throw new Exception(s"Service error ${response.status}: ${response.body}")
+          case default =>
+            response.json.validate[OAuthTokenError]
+              .fold(_ => throw new Exception("parse json failed on failure"),
+                s => throw new TokenErrorException(s))
+        })
   }
 
   def invalidateToken: Unit = {
 
   }
-  
+
   def failEarly(wsresponse: Future[WSResponse]): Future[WSResponse] =
     wsresponse.map(
       response =>
