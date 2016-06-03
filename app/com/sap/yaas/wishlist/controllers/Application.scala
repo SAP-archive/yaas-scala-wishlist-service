@@ -15,20 +15,23 @@ import com.google.inject.Inject
 import com.sap.yaas.wishlist.document.DocumentClient
 import com.sap.yaas.wishlist.model.Wishlist
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
-import com.sap.yaas.wishlist.security.YaasActions._
+import com.sap.yaas.wishlist.security.YaasActions
 import com.sap.yaas.wishlist.service.ConstraintViolationException
-import com.sap.yaas.wishlist.util.YaasLogger
+import com.sap.yaas.wishlist.util.{ErrorMapper, YaasLogger}
+import play.api.Configuration
 import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
-import play.api.Configuration
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class Application @Inject() (documentClient: DocumentClient,
-    oauthClient: OAuthTokenCacheWrapper,
-    config: Configuration)(implicit context: ExecutionContext) extends Controller {
+
+class Application @Inject()(documentClient: DocumentClient,
+                            oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
+                            config: Configuration, yaasActions: YaasActions)(implicit context: ExecutionContext) extends Controller {
 
   val Logger = YaasLogger(this.getClass)
+
+  import yaasActions._
 
   def getWishlists(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext

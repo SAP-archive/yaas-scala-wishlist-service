@@ -19,7 +19,7 @@
   <!-- disable the wirelog (set it to higher than info) in production!!! -->
   <logger name="yaas.wishlist.wirelog" level="INFO" />
   <logger name="application" level="DEBUG" />
-  <logger name="com.ning.http.client" level="DEBUG" />
+  <logger name="org.asynchttpclient" level="DEBUG" />
   <logger name="com.gargoylesoftware.htmlunit" level="ERROR" />
 
   <logger name="com.gargoylesoftware.htmlunit.javascript" level="OFF" />

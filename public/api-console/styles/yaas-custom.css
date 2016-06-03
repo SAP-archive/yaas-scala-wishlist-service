@@ -1,0 +1,21 @@
+/* make way for the custom footer */
+body .raml-console-error-primary {
+    margin-bottom: 150px;
+}
+
+/* style custom footer*/
+footer.yaas-footer {
+    position: fixed;
+    bottom: 0;
+    height: 126px;
+    width: 100%;
+    padding-top: 10px;
+    z-index: 5; /* occlude action tabs */
+    background-color: #eee;
+}
+
+footer.yaas-footer div.exhibit {
+    font-size: smaller;
+    text-align: center;
+    font-style: italic;
+}

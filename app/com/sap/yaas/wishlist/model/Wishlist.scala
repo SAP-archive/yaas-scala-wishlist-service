@@ -62,8 +62,6 @@ package com.sap.yaas.wishlist.model
 case class Wishlist(id: String, owner: String, title: String,
   items: Seq[WishlistItem], url: Option[String] = None)
 
-//TODO: Json format for java.net.URI
-
 object Wishlist {
   type Wishlists = Seq[Wishlist]
 
