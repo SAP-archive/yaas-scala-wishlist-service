@@ -157,8 +157,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     }
     
     "call document service multiple times, receiving 500s to open circuit" in {
-      stubFor(get(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"))
-          .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
+      stubFor(get(urlPathMatching(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"))
           .willReturn(
               aResponse().withStatus(SERVICE_UNAVAILABLE)
           )
@@ -169,13 +168,22 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val max_failures = app.configuration.getInt("yaas.document.max_failures").get
       for (a <- 1 to (max_failures + 2)) {
         inside(route(app, request)) {
-          case Some(result) =>
-            if (a <= max_failures)
-              status(result) mustBe SERVICE_UNAVAILABLE
-            else
+          case Some(result) => {
+            if(a < max_failures) {
               status(result) mustBe INTERNAL_SERVER_ERROR
+              //message("Service Unavailable")
+            } else {
+              status(result) mustBe INTERNAL_SERVER_ERROR
+              //message("CircuitBreaker is now open, and will not close for one minute")
+            }
+          }
         }
       }
+            //for (a <- 1 to (max_failures + 2)) {
+                  //if (a <= max_failures)
+      //            else
+      //              status(result) mustBe INTERNAL_SERVER_ERROR
+      //}
     }
 
   }
