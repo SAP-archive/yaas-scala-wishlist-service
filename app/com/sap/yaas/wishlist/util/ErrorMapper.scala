@@ -28,10 +28,7 @@ import play.api.routing.Router
 
 import scala.concurrent._
 
-class ErrorHandler @Inject()(env: Environment, config: Configuration,
-                             sourceMapper: OptionalSourceMapper,
-                             router: Provider[Router])
-  extends DefaultHttpErrorHandler(env, config, sourceMapper, router) {
+class ErrorMapper @Inject()(config: Configuration) {
 
   private val statusCodesToErrorTypeMap = Map(
     400 -> "bad_payload_syntax",
@@ -44,7 +41,7 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
     413 -> "bad_payload_size",
     414 -> "uri_too_long",
     415 -> "unsupported_request_content_type",
-    500 -> ErrorHandler.TYPE_INTERNAL_SERVER_ERROR,
+    500 -> ErrorMapper.TYPE_INTERNAL_SERVER_ERROR,
     503 -> "service_temporarily_unavailable"
   )
 
@@ -52,22 +49,16 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
     new URI(config.getString("yaas.base_url").get)
   }
 
-  override def onServerError(request: RequestHeader, exception: Throwable): Future[Result] = {
-    Future.successful(exception match {
+  val mapError: PartialFunction[Throwable, Result] = {
       case e: DocumentExistsException => Conflict(createBody(e))
       case e: UnauthorizedException => Unauthorized(createBody(e))
       case e: ForbiddenException => Forbidden(createBody(e))
       case e: ConstraintViolationException => BadRequest(createBody(e))
       case e: Exception => InternalServerError(createBody(e))
-    })
-  }
-
-  override protected def onDevServerError(request: RequestHeader, exception: UsefulException): Future[Result] = {
-    onServerError(request, exception)
   }
 
   private def errorTypeForStatus(status: Int): String = {
-    statusCodesToErrorTypeMap.getOrElse(status, ErrorHandler.TYPE_INTERNAL_SERVER_ERROR)
+    statusCodesToErrorTypeMap.getOrElse(status, ErrorMapper.TYPE_INTERNAL_SERVER_ERROR)
   }
 
   private def createBody(exception: DocumentExistsException): JsValue = {
@@ -79,7 +70,6 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 
   private def createBody(exception: ConstraintViolationException): JsValue = {
-    // TODO render ErrorDetails
     val details = exception.errors.flatMap(error =>
       error._2.map(errorMessage =>
         createErrorDetail(Some(error._1), "validation_error", errorMessage)
@@ -107,6 +97,6 @@ class ErrorHandler @Inject()(env: Environment, config: Configuration,
   }
 }
 
-object ErrorHandler {
+object ErrorMapper {
   val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
 }

@@ -69,8 +69,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
       stubFor(post(urlEqualTo(path))
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
-        .withHeader("hybris-requestId", equalTo(TEST_REQUEST_ID))
-        .withHeader("hybris-hop", equalTo(TEST_HOP))
+//        .withHeader("hybris-requestId", equalTo(TEST_REQUEST_ID))
+//        .withHeader("hybris-hop", equalTo(TEST_HOP))
         .withHeader("Authorization", containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
@@ -112,7 +112,6 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       inside(route(app, request)) {
         case Some(result) =>
           status(result) mustBe CONFLICT
-        case _ => println("error")
       }
     }
 

@@ -11,10 +11,13 @@
  */
 package com.sap.yaas.wishlist.security
 
+import javax.inject.Inject
+
 import com.sap.yaas.wishlist.model.YaasAwareParameters
+import com.sap.yaas.wishlist.util.ErrorMapper
 import play.api.mvc._
 
-import scala.concurrent.Future
+import scala.concurrent.{ExecutionContext, Future}
 
 /**
  * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
@@ -23,18 +26,21 @@ import scala.concurrent.Future
  * So now we need to get the parameters out of the request twice, which is annoying.
  * TODO Try alternative implementation with Action with YaasActionFunction
  */
-object YaasActions {
+class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionContext) {
 
   val YaasAction = YaasActionBuilder andThen YaasActionTransformer
-  val ManageAction = YaasAction andThen ManageActionFilter
-  val ViewAction = YaasAction andThen ViewActionFilter
+  val ManageAction = YaasAction andThen ManageActionFilter andThen RecoverActionBuilder
+  val ViewAction = YaasAction andThen ViewActionFilter andThen RecoverActionBuilder
 
   private[this] object YaasActionBuilder extends ActionBuilder[Request] {
-    // TODO check if yaas required parameters are set?
-    implicit val ec = executionContext
-
+    // TODO check if yaas required parameters are set? In YaasAwareParameters?
     def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] =
       block(request).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
+  }
+
+  private[this] object RecoverActionBuilder extends ActionFunction[YaasRequest,YaasRequest] {
+    def invokeBlock[A](request: YaasRequest[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
+      block(request).recover(errorMapper.mapError)
   }
 
   private[this] object YaasActionTransformer extends ActionTransformer[Request, YaasRequest] {
