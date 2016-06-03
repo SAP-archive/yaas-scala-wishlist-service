@@ -27,6 +27,7 @@ import play.api.mvc._
 import play.api.routing.Router
 
 import scala.concurrent._
+import com.sap.yaas.wishlist.document.NotFoundException
 
 class ErrorMapper @Inject()(config: Configuration) {
 
@@ -54,6 +55,7 @@ class ErrorMapper @Inject()(config: Configuration) {
       case e: UnauthorizedException => Unauthorized(createBody(e))
       case e: ForbiddenException => Forbidden(createBody(e))
       case e: ConstraintViolationException => BadRequest(createBody(e))
+      case e: NotFoundException => NotFound(createBody(e))
       case e: Exception => InternalServerError(createBody(e))
   }
 
@@ -80,6 +82,10 @@ class ErrorMapper @Inject()(config: Configuration) {
   private def createBody(exception: ForbiddenException): JsValue = {
     createErrorMessage(FORBIDDEN, "Missing scope while calling the service. " +
       s"Provided scope: ${exception.scope}, required scope in: ${exception.requiredScopeIn}")
+  }
+  
+  private def createBody(exception: NotFoundException): JsValue = {
+    createErrorMessage(NOT_FOUND, "Requested resource is not available")
   }
 
   private def createBody(exception: Exception): JsValue = {
