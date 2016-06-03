@@ -24,6 +24,7 @@ import org.scalatestplus.play._
 import play.api.libs.json.{JsString, Json}
 import play.api.test.Helpers._
 import play.api.test._
+import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 
 // TODO: Test for circuit breaker to take effect
 
@@ -71,8 +72,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
       stubFor(post(urlEqualTo(path))
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
-        .withHeader("hybris-request-id", equalTo(TEST_REQUEST_ID))
-        .withHeader("hybris-hop", equalTo(TEST_HOP))
+        .withHeader(HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
+        .withHeader(HYBRIS_HOP, equalTo(TEST_HOP))
         .withHeader("Authorization", containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
@@ -84,8 +85,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
-          "hybris-request-id" -> TEST_REQUEST_ID,
-          "hybris-hop" -> TEST_HOP
+          HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
+          HYBRIS_HOP -> TEST_HOP
         )
         .withBody(wishlistJson)
 
@@ -190,9 +191,9 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
   val defaultHeaders: Seq[(String, String)] = Seq(
     CONTENT_TYPE_HEADER -> JSON,
-    "hybris-tenant" -> TEST_TENANT,
-    "hybris-client" -> TEST_CLIENT,
-    "hybris-scopes" -> "altocon.wishlist_manage")
+    HYBRIS_TENANT -> TEST_TENANT,
+    HYBRIS_CLIENT -> TEST_CLIENT,
+    HYBRIS_SCOPES -> "altocon.wishlist_manage")
 
 }
 

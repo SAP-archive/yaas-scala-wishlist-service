@@ -23,7 +23,7 @@ import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
-
+import Application._
 
 class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
@@ -38,7 +38,7 @@ class Application @Inject()(documentClient: DocumentClient,
   def getAll(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_view"))
+      token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_VIEW))
       result <- documentClient.getAll(token.access_token, pageNumber, pageSize).map(response =>
         Ok(Json.toJson(response)))
     } yield result
@@ -51,7 +51,7 @@ class Application @Inject()(documentClient: DocumentClient,
       case JsSuccess(jsonWishlist, _) =>
         logger.debug("wishlist: " + jsonWishlist)
         for {
-          token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
+          token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_MANAGE))
           result <- documentClient.create(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response)))
         } yield result
@@ -66,7 +66,7 @@ class Application @Inject()(documentClient: DocumentClient,
       case JsSuccess(jsonWishlist, _) =>
         logger.debug("wishlist item: " + jsonWishlist)
         for {
-          token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
+          token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_MANAGE))
           result <- documentClient.update(jsonWishlist, token.access_token).map(
             response => Ok(Json.toJson(response)))
         } yield result
@@ -78,7 +78,7 @@ class Application @Inject()(documentClient: DocumentClient,
   def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_manage"))
+      token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_MANAGE))
       result <- documentClient.delete(wishlistId, token.access_token).map(response =>
         NoContent)
     } yield result
@@ -87,9 +87,17 @@ class Application @Inject()(documentClient: DocumentClient,
   def get(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
-      token <- oauthClient.acquireToken(credentials, Seq("hybris.document_view"))
+      token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_VIEW))
       result <- documentClient.get(wishlistId, token.access_token).map(response =>
         Ok(Json.toJson(response)))
     } yield result
   }
+}
+
+object Application {
+
+  val SCOPE_DOCUMENT_MANAGE = "hybris.document_manage"
+  
+  val SCOPE_DOCUMENT_VIEW = "hybris.document_view"
+
 }
