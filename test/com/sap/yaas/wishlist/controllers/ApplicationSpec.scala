@@ -25,6 +25,8 @@ import play.api.libs.json.{JsString, Json}
 import play.api.test.Helpers._
 import play.api.test._
 
+// TODO: Test for circuit breaker to take effect
+
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
   val wishlistItem = new WishlistItem("product", 4, Some("note"), None)
