@@ -18,12 +18,13 @@ import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
 import org.slf4j.{Logger, LoggerFactory}
+import play.api.{Environment, Mode}
 import play.api.libs.streams.Accumulator
 import play.api.mvc.{EssentialAction, EssentialFilter, Result}
 
 import scala.concurrent.{ExecutionContext, Future}
 
-class WireLog @Inject()(implicit mat: Materializer) extends EssentialFilter {
+class WireLog @Inject()(env: Environment)(implicit mat: Materializer) extends EssentialFilter {
 
   val log = LoggerFactory.getLogger("yass.wishlist.wirelog")
 
@@ -38,29 +39,35 @@ class WireLog @Inject()(implicit mat: Materializer) extends EssentialFilter {
   after buffering the body, you can log it, and then you can pass it down to the Accumulator
   from the next call in the chain.  Without the infinite buffer protection, it would look like this:
  */
-  def apply(next: EssentialAction): EssentialAction = if (log.isInfoEnabled) {
-    EssentialAction { req =>
-      log.info("=== REQUEST ===")
-      req.headers.headers.foreach(_ => log.info(_))
-      Accumulator[ByteString, ByteString](Sink.fold(ByteString.empty)(_ ++ _)).mapFuture { body =>
-        // Now you have the request header in "req" and  the request body in "body", log it:
-        log.info("--------------------")
-        log.info(body.toString())
-        log.info("--------------------")
-        // Now invoke the action and feed the buffered body into it
-        next(req).run(Source.single(body)).map(
-          response => {
-            log.info("=== REQUEST ===")
-            response.header.headers.foreach(_ => log.info(_))
-            log.info("--------------------")
-            log.info(response.body.toString)
-            log.info("--------------------")
-            response
-          }
-        )
+
+  def apply(next: EssentialAction): EssentialAction =
+
+  /**
+    * The wire log can lead to memory overflows and should not be used in production. Hence the mode check.
+    */
+    if (env.mode != Mode.Prod && log.isInfoEnabled) {
+      EssentialAction { req =>
+        log.info("=== REQUEST ===")
+        req.headers.headers.foreach(_ => log.info(_))
+        Accumulator[ByteString, ByteString](Sink.fold(ByteString.empty)(_ ++ _)).mapFuture { body =>
+          // Now you have the request header in "req" and  the request body in "body", log it:
+          log.info("--------------------")
+          log.info(body.toString())
+          log.info("--------------------")
+          // Now invoke the action and feed the buffered body into it
+          next(req).run(Source.single(body)).map(
+            response => {
+              log.info("=== REQUEST ===")
+              response.header.headers.foreach(_ => log.info(_))
+              log.info("--------------------")
+              log.info(response.body.toString)
+              log.info("--------------------")
+              response
+            }
+          )
+        }
       }
-    }
-  } else next
+    } else next
 
   /*
   Providing protection against out of memory errors requires sending the stream through a flow that
