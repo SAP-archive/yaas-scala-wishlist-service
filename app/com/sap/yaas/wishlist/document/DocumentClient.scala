@@ -165,7 +165,8 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       response =>
         response.status match {
           case NO_CONTENT =>
-            () // empty
+            () // empty 
+          case NOT_FOUND => throw new NotFoundException("resource not found", path)
           case _ => throw new Exception("Unexpected response status: " + response)
         }
     }
