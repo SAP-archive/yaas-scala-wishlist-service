@@ -18,6 +18,7 @@ import com.sap.yaas.wishlist.util.ErrorMapper
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Success, Try, Failure}
 
 /**
   * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
@@ -33,10 +34,12 @@ class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionCont
       block(request).recover(errorMapper.mapError)
   }
 
-  // TODO exception is thrown to early... ;)
   private[this] object YaasAction extends ActionFunction[Request, YaasRequest] {
-    def invokeBlock[A](request: Request[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
-      block(YaasRequest(YaasAwareParameters(request), request)).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
+    def invokeBlock[A](request: Request[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] = {
+      Try(YaasAwareParameters(request)) match {
+        case Success(yaasParams) => block(YaasRequest(yaasParams, request)).map(_.withHeaders(yaasParams.asSeq: _*))
+        case Failure(ex) => Future.failed(ex).recover(errorMapper.mapError)
+      }
+    }
   }
-
 }

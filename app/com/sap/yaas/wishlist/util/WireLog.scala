@@ -52,13 +52,18 @@ class WireLog @Inject()(env: Environment)(implicit mat: Materializer, ec: Execut
         Accumulator[ByteString, ByteString](Sink.fold(ByteString.empty)(_ ++ _)).mapFuture { body =>
           // Now you have the request header in "req" and  the request body in "body", log it:
           log.info("--------------------")
-          log.info(body.toString())
+          log.info(body.utf8String)
           log.info("--------------------")
           // Now invoke the action and feed the buffered body into it
           next(req).run(Source.single(body)).map(
             response => {
+              log.info("=== RESPONSE ===")
               response.header.headers.foreach(header => log.info(header.toString))
-              // TODO log response?
+              log.info("--------------------")
+              response.body.consumeData.map(b => {
+                println(b.utf8String)
+                log.info("--------------------")
+              })
               response
             }
           )

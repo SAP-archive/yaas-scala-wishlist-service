@@ -28,7 +28,7 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
 
 object YaasAwareParameters {
   def apply[A](request: Request[A]): YaasAwareParameters = {
-    new YaasAwareParameters(
+      new YaasAwareParameters(
       request.headers.get("hybris-tenant").getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
       request.headers.get("hybris-client").getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
       request.headers.get("scope").getOrElse(""),
