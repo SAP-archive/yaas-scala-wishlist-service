@@ -11,6 +11,7 @@
  */
 package com.sap.yaas.wishlist.security
 
+import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 import play.api.mvc._
 
 import scala.concurrent.Future
@@ -18,7 +19,7 @@ import scala.concurrent.Future
 object ManageActionFilter extends ActionFilter[YaasRequest] {
 
   def filter[A](input: YaasRequest[A]): Future[Option[Result]] = Future.successful {
-    val scope = input.headers.get("scope")
+    val scope = input.headers.get(HYBRIS_SCOPES)
     if (!scope.contains(SecurityUtils.MANAGE_SCOPE)) {
       throw new ForbiddenException(scope, Seq(SecurityUtils.MANAGE_SCOPE))
     } else {
