@@ -20,12 +20,12 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
- * Request to be a YaasRequest that holds a context.
- * ActionBuilder does not allow you to refine the type. ActionTransformer does not allow you put code "around" the invoke.
- * So now we need to get the parameters out of the request twice, which is annoying.
- * TODO Try alternative implementation with Action with YaasActionFunction
- */
+  * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
+  * Request to be a YaasRequest that holds a context.
+  * ActionBuilder does not allow you to refine the type. ActionTransformer does not allow you put code "around" the invoke.
+  * So now we need to get the parameters out of the request twice, which is annoying.
+  * TODO Try alternative implementation with Action with YaasActionFunction
+  */
 class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionContext) {
 
   val YaasAction = YaasActionBuilder andThen YaasActionTransformer
@@ -38,7 +38,7 @@ class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionCont
       block(request).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
   }
 
-  private[this] object RecoverActionBuilder extends ActionFunction[YaasRequest,YaasRequest] {
+  private[this] object RecoverActionBuilder extends ActionFunction[YaasRequest, YaasRequest] {
     def invokeBlock[A](request: YaasRequest[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
       block(request).recover(errorMapper.mapError)
   }

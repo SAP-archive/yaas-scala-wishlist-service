@@ -13,32 +13,31 @@ package com.sap.yaas.wishlist.document
 
 import javax.inject.Inject
 
+import akka.actor.ActorSystem
+import akka.pattern.CircuitBreaker
 import com.sap.yaas.wishlist.model.Wishlist._
-import com.sap.yaas.wishlist.model.{ ResourceLocation, Wishlist, YaasAwareParameters, UpdateResource}
+import com.sap.yaas.wishlist.model.{ResourceLocation, UpdateResource, Wishlist, YaasAwareParameters}
+import com.sap.yaas.wishlist.util.YaasLogger
 import play.api.Configuration
 import play.api.http.Status._
 import play.api.libs.json.{JsSuccess, Json}
 import play.api.libs.ws._
 
-import scala.concurrent.{ExecutionContext, Future}
-import akka.pattern.CircuitBreaker
-import akka.actor.ActorSystem
-import com.sap.yaas.wishlist.util.YaasLogger
-
 import scala.concurrent.duration._
+import scala.concurrent.{ExecutionContext, Future}
 
-class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
+class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
   val logger = YaasLogger(this.getClass)
 
   val breaker =
     new CircuitBreaker(system.scheduler,
-      maxFailures = config.getInt("yaas.document.max_failures").getOrElse(5),
-      callTimeout = Duration(config.getMilliseconds("yaas.document.call_timeout").getOrElse(10000l),MILLISECONDS),
-      resetTimeout = Duration(config.getMilliseconds("yaas.document.reset_timeout").getOrElse(60000l),MILLISECONDS))
-        .onHalfOpen(notifyOnHalfOpen())
-        .onOpen(notifyOnOpen())
+      maxFailures = config.getInt("yaas.document.max_failures").get,
+      callTimeout = Duration(config.getMilliseconds("yaas.document.call_timeout").get, MILLISECONDS),
+      resetTimeout = Duration(config.getMilliseconds("yaas.document.reset_timeout").get, MILLISECONDS))
+      .onHalfOpen(notifyOnHalfOpen())
+      .onOpen(notifyOnOpen())
 
   def notifyOnHalfOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
@@ -46,7 +45,8 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
   def notifyOnOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
-  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+  def getWishlists(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
+                  (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
     val path = List(config.getString("yaas.document.url").get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -54,10 +54,12 @@ class DocumentClient @Inject() (ws: WSClient, config: Configuration, system: Act
       DocumentClient.WISHLIST_PATH).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
-        "Authorization" -> ("Bearer " + token)).withQueryString("totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
+      "Authorization" -> ("Bearer " + token)).withQueryString(
+      "totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
 
     val futureResponse: Future[WSResponse] =
-      breaker.withCircuitBreaker(failEarly(pageNumber.fold(request)(p => request.withQueryString("pageNumber" -> p.toString())).get))
+      breaker.withCircuitBreaker(failEarly(pageNumber.fold(request)(
+        p => request.withQueryString("pageNumber" -> p.toString())).get))
 
     futureResponse map {
       response =>

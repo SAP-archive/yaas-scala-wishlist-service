@@ -105,4 +105,5 @@ class ErrorMapper @Inject()(config: Configuration) {
 
 object ErrorMapper {
   val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
+  val TYPE_NOT_FOUND_ERROR = "not_found_error"
 }
