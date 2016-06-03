@@ -16,6 +16,7 @@
   </appender>
 
   <logger name="play" level="INFO" />
+  <!-- disable the wirelog (set it to higher than info) in production!!! -->
   <logger name="yaas.wishlist.wirelog" level="INFO" />
   <logger name="application" level="DEBUG" />
   <logger name="com.ning.http.client" level="DEBUG" />
