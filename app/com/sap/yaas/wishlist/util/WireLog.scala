@@ -64,7 +64,9 @@ class WireLog @Inject()(env: Environment)(implicit mat: Materializer, ec: Execut
           )
         }
       }
-    } else next
+    } else {
+      next
+    }
 
   /*
   Providing protection against out of memory errors requires sending the stream through a flow that

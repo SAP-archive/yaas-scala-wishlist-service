@@ -14,20 +14,21 @@ package com.sap.yaas.wishlist.oauth
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.model.OAuthToken
+import com.sap.yaas.wishlist.security.Credentials
 import play.api.cache.CacheApi
 
-import scala.concurrent.{ ExecutionContext, Future }
+import scala.concurrent.{ExecutionContext, Future}
 
 class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
   cache: CacheApi)(implicit context: ExecutionContext)
     extends OAuthTokenProvider {
 
-  def acquireToken(clientId: String, clientSecret: String, scopes: Seq[String]): Future[OAuthToken] = {
+  def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken] = {
     cache.get[OAuthToken](scopes.mkString(" ")) match {
       case Some(token) =>
         Future.successful(token)
       case None =>
-        wrappedTokenService.acquireToken(clientId, clientSecret, scopes).map { token =>
+        wrappedTokenService.acquireToken(credentials, scopes).map { token =>
           cache.set(scopes.mkString(" "), token)
           token
         }
