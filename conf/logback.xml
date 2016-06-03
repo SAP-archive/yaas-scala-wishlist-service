@@ -16,6 +16,8 @@
   </appender>
 
   <logger name="play" level="INFO" />
+  <!-- wirelog will be enabled when set to INFO or lower (i.e. DEBUG, TRACE).
+    It's deactivated in production mode -->
   <logger name="yaas.wishlist.wirelog" level="INFO" />
   <logger name="application" level="DEBUG" />
   <logger name="org.asynchttpclient" level="DEBUG" />
