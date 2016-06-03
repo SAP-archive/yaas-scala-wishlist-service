@@ -17,14 +17,14 @@ import javax.inject.Inject
 import akka.stream.Materializer
 import akka.stream.scaladsl.{Sink, Source}
 import akka.util.ByteString
-import org.slf4j.{Logger, LoggerFactory}
-import play.api.{Environment, Mode}
+import org.slf4j.LoggerFactory
 import play.api.libs.streams.Accumulator
-import play.api.mvc.{EssentialAction, EssentialFilter, Result}
+import play.api.mvc.{EssentialAction, EssentialFilter}
+import play.api.{Environment, Mode}
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.ExecutionContext
 
-class WireLog @Inject()(env: Environment)(implicit mat: Materializer) extends EssentialFilter {
+class WireLog @Inject()(env: Environment)(implicit mat: Materializer, ec: ExecutionContext) extends EssentialFilter {
 
   val log = LoggerFactory.getLogger("yass.wishlist.wirelog")
 
@@ -48,7 +48,7 @@ class WireLog @Inject()(env: Environment)(implicit mat: Materializer) extends Es
     if (env.mode != Mode.Prod && log.isInfoEnabled) {
       EssentialAction { req =>
         log.info("=== REQUEST ===")
-        req.headers.headers.foreach(_ => log.info(_))
+        req.headers.headers.foreach(header => log.info(header.toString))
         Accumulator[ByteString, ByteString](Sink.fold(ByteString.empty)(_ ++ _)).mapFuture { body =>
           // Now you have the request header in "req" and  the request body in "body", log it:
           log.info("--------------------")
@@ -57,11 +57,8 @@ class WireLog @Inject()(env: Environment)(implicit mat: Materializer) extends Es
           // Now invoke the action and feed the buffered body into it
           next(req).run(Source.single(body)).map(
             response => {
-              log.info("=== REQUEST ===")
-              response.header.headers.foreach(_ => log.info(_))
-              log.info("--------------------")
-              log.info(response.body.toString)
-              log.info("--------------------")
+              response.header.headers.foreach(header => log.info(header.toString))
+              // TODO log response?
               response
             }
           )
