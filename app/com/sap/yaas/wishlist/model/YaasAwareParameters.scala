@@ -11,6 +11,7 @@
  */
 package com.sap.yaas.wishlist.model
 
+import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api.mvc.Request
 
 case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
@@ -18,19 +19,23 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
     hybrisUser: Option[String],
     hybrisRequestId: Option[String],
     hybrisHop: Int = 1) {
-  val asSeq: Seq[(String, String)] = Seq("hybris-tenant" -> hybrisTenant, "hybris-client" -> hybrisClient, "hybrisHop" -> hybrisHop.toString) ++
-    (if (!hybrisUser.isEmpty) Seq("hybrisUser" -> hybrisUser.get) else Seq()) ++
-    (if (!hybrisRequestId.isEmpty) Seq("hybrisRequestId" -> hybrisRequestId.get) else Seq())
+  val asSeq: Seq[(String, String)] = Seq("hybris-tenant" -> hybrisTenant,
+    "hybris-client" -> hybrisClient,
+    "hybris-hop" -> hybrisHop.toString) ++
+    (if (!hybrisUser.isEmpty) Seq("hybris-ser" -> hybrisUser.get) else Seq()) ++
+    (if (!hybrisRequestId.isEmpty) Seq("hybris-request-id" -> hybrisRequestId.get) else Seq())
 }
 
 object YaasAwareParameters {
   def apply[A](request: Request[A]): YaasAwareParameters = {
     new YaasAwareParameters(
-      request.headers.get("hybris-tenant").getOrElse(throw new Exception("tenant header missing")),
-      request.headers.get("hybris-client").getOrElse(throw new Exception("client header missing")),
+      request.headers.get("hybris-tenant").getOrElse(throw new ConstraintViolationException(
+        Seq[(String, Seq[String])]("hybris-tenant header missing" -> Nil))),
+      request.headers.get("hybris-client").getOrElse(throw new ConstraintViolationException(
+        Seq[(String, Seq[String])]("hybris-client header missing" -> Nil))),
       request.headers.get("scope").getOrElse(""),
       request.headers.get("hybris-user"),
-      request.headers.get("hybris-requestId"),
+      request.headers.get("hybris-request-id"),
       request.headers.get("hybris-hop").getOrElse("1").toInt)
   }
 }

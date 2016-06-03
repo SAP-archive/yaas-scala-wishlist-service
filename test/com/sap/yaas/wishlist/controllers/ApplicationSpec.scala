@@ -64,13 +64,13 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
 
   "Application" must {
 
-    "create a wishlist in document service propagating the hybris-requestId" in {
+    "create a wishlist in document service propagating the hybris-request-id" in {
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
 
       stubFor(post(urlEqualTo(path))
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
-//        .withHeader("hybris-requestId", equalTo(TEST_REQUEST_ID))
-//        .withHeader("hybris-hop", equalTo(TEST_HOP))
+        .withHeader("hybris-request-id", equalTo(TEST_REQUEST_ID))
+        .withHeader("hybris-hop", equalTo(TEST_HOP))
         .withHeader("Authorization", containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
@@ -82,7 +82,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val request = FakeRequest(POST, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
-          "hybris-requestId" -> TEST_REQUEST_ID,
+          "hybris-request-id" -> TEST_REQUEST_ID,
           "hybris-hop" -> TEST_HOP
         )
         .withBody(wishlistJson)
