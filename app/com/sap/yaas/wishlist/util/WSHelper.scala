@@ -16,6 +16,9 @@ import play.api.libs.ws.WSResponse
 
 import scala.concurrent.{ExecutionContext, Future}
 
+/**
+ * Helper object for Circuit Breaker to fail fast for certain error codes
+ */
 object WSHelper {
 
   /**

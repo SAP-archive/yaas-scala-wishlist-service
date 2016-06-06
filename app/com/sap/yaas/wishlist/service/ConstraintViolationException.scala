@@ -11,4 +11,7 @@
  */
 package com.sap.yaas.wishlist.service
 
+/**
+ * Provides a constraint violation exception
+ */
 class ConstraintViolationException(val errors: Seq[(String, Seq[String])]) extends Exception

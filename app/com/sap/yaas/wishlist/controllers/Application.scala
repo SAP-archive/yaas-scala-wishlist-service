@@ -25,6 +25,9 @@ import play.api.mvc._
 import scala.concurrent.{ExecutionContext, Future}
 import Application._
 
+/**
+ * Main entry point, implementing our endpoints defined in the `routes` file
+ */
 class Application @Inject()(documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
                             config: Configuration, yaasActions: YaasActions)(implicit context: ExecutionContext) extends Controller {
@@ -35,6 +38,12 @@ class Application @Inject()(documentClient: DocumentClient,
 
   import yaasActions._
 
+  /**
+   * Endpoint implementation for retrieving a list (paginated if desired) of wishlists
+   * @param pageNumber (optional, default=1) of the page you want to retrieve
+   * @param pageSize (optional, default=16) of the pages you want to view 
+   * @return a YaasRequest
+   */
   def getAll(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
@@ -45,6 +54,10 @@ class Application @Inject()(documentClient: DocumentClient,
   }
 
 
+  /**
+   * Endpoint implementation for creation of a single wishlist
+   * @return a YaasRequest
+   */
   def create(): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
     implicit val yaasContext = request.yaasContext
     request.body.validate[Wishlist] match {
@@ -60,6 +73,11 @@ class Application @Inject()(documentClient: DocumentClient,
     }
   }
 
+  /**
+   * Endpoint implementation to update a wishlist by id
+   * @param wishlistId of the wishlist to update
+   * @return a YaasRequest
+   */
   def update(wishlistId: String): Action[JsValue] = ManageAction.async(BodyParsers.parse.json) { request =>
     implicit val yaasContext = request.yaasContext
     request.body.validate[Wishlist] match {
@@ -75,6 +93,11 @@ class Application @Inject()(documentClient: DocumentClient,
     }
   }
 
+  /**
+   * Endpoint implementation to delete a wishlist by id
+   * @param wishlistId of the wishlist to delete
+   * @return a YaasRequest
+   */
   def delete(wishlistId: String): Action[AnyContent] = ManageAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
@@ -84,6 +107,11 @@ class Application @Inject()(documentClient: DocumentClient,
     } yield result
   }
 
+  /**
+   * Endpoint implementation to get a single wishlist by id
+   * @param wishlistId of the wishlist to retrieve
+   * @return a YaasRequest
+   */
   def get(wishlistId: String): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
     for {
@@ -94,6 +122,9 @@ class Application @Inject()(documentClient: DocumentClient,
   }
 }
 
+/**
+ * Helper object to provide global vals
+ */
 object Application {
 
   val SCOPE_DOCUMENT_MANAGE = "hybris.document_manage"

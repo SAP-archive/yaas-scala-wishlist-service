@@ -14,6 +14,9 @@ package com.sap.yaas.wishlist.util
 import com.sap.yaas.wishlist.model.YaasAwareParameters
 import org.slf4j.{Logger, LoggerFactory, MDC}
 
+/**
+ * Logging class, overriding necessary methods of the Logger implementation to make the log more YaaS flavored
+ */
 class YassLogger(underlying: Logger) {
 
     def getLogger: Logger = underlying

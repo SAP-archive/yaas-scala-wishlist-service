@@ -59,10 +59,16 @@ package com.sap.yaas.wishlist.model
 }
 
  */
+/**
+ * Case class for formatting a Wishlist object
+ */
 case class Wishlist(id: String, owner: String, title: String,
   items: Seq[WishlistItem], url: Option[String] = None)
 
 object Wishlist {
+  /**
+   * Definition of Wishlists type as Sequence of multiple or one Wishlist
+   */
   type Wishlists = Seq[Wishlist]
 
   import play.api.libs.json._

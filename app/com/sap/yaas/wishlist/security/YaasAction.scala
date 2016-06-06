@@ -21,7 +21,7 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Success, Try, Failure}
 
 /**
-  * Holds a YaasAction that will extract Yaas header from the Request, will add them to the result, and will also refine the
+  * Holds a YaasAction that will extract Yaas headers from the Request, will add them to the result, and will also refine the
   * Request to be a YaasRequest that holds a context.
   */
 class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionContext) {

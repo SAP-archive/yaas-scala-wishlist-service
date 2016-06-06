@@ -16,6 +16,9 @@ import play.api.mvc._
 
 import scala.concurrent.Future
 
+/**
+ * Enforces necessity of wishlist_manage scope if used in the desired endpoint
+ */
 object ManageActionFilter extends ActionFilter[YaasRequest] {
 
   def filter[A](input: YaasRequest[A]): Future[Option[Result]] = Future.successful {

@@ -24,6 +24,9 @@ import play.api.{Environment, Mode}
 
 import scala.concurrent.ExecutionContext
 
+/**
+ * Logging provider used by the application
+ */
 class WireLog @Inject()(env: Environment)(implicit mat: Materializer, ec: ExecutionContext) extends EssentialFilter {
 
   val log = LoggerFactory.getLogger("yass.wishlist.wirelog")

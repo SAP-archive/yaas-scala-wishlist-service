@@ -15,6 +15,9 @@ import java.net.URI
 
 import play.api.libs.json._
 
+/**
+ * Json mapper for java URI format
+ */
 object UriFormat {
   implicit val uriReads = Reads {
     js => js match {

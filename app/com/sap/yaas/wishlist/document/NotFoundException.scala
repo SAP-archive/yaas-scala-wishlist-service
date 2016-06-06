@@ -11,4 +11,7 @@
  */
 package com.sap.yaas.wishlist.document
 
+/**
+ * Definition of document not found exception
+ */
 class NotFoundException(val message: String, val path: String) extends Exception(message)

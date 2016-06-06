@@ -29,6 +29,9 @@ import play.api.routing.Router
 import scala.concurrent._
 import com.sap.yaas.wishlist.document.NotFoundException
 
+/**
+ * Maps common status codes to exceptions
+ */
 class ErrorMapper @Inject()(config: Configuration) {
 
   private val statusCodesToErrorTypeMap = Map(
@@ -59,18 +62,30 @@ class ErrorMapper @Inject()(config: Configuration) {
       case e: Exception => InternalServerError(createBody(e))
   }
 
+  /**
+   * Maps a status code to an exception if handled by the mapper, otherwise maps it to internal server error
+   */
   private def errorTypeForStatus(status: Int): String = {
     statusCodesToErrorTypeMap.getOrElse(status, ErrorMapper.TYPE_INTERNAL_SERVER_ERROR)
   }
 
+  /**
+   * Creates a message body for a document exists exception
+   */
   private def createBody(exception: DocumentExistsException): JsValue = {
     createErrorMessage(CONFLICT, "Wishlist already exists")
   }
 
+  /**
+   * Creates a message body for an unauthorized exception
+   */
   private def createBody(exception: UnauthorizedException): JsValue = {
     createErrorMessage(UNAUTHORIZED, "Unauthorized call")
   }
 
+  /**
+   * Creates a message body for a constraint violation exception
+   */
   private def createBody(exception: ConstraintViolationException): JsValue = {
     val details = exception.errors.flatMap(error =>
       error._2.map(errorMessage =>
@@ -79,25 +94,40 @@ class ErrorMapper @Inject()(config: Configuration) {
     createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
   }
 
+  /**
+   * Creates a message body for a forbidden exception
+   */
   private def createBody(exception: ForbiddenException): JsValue = {
     createErrorMessage(FORBIDDEN, "Missing scope while calling the service. " +
       s"Provided scope: ${exception.scope}, required scope in: ${exception.requiredScopeIn}")
   }
   
+  /**
+   * Creates a message body for a not found exception
+   */
   private def createBody(exception: NotFoundException): JsValue = {
     createErrorMessage(NOT_FOUND, "Requested resource is not available")
   }
 
+  /**
+   * Creates a message body for a general exception
+   */
   private def createBody(exception: Exception): JsValue = {
     Logger.error("Unexpected exception", exception)
     createErrorMessage(INTERNAL_SERVER_ERROR, s"Unexpected error: ${exception.getMessage}")
   }
 
+  /**
+   * Creates a json response object to be returned to the api user
+   */
   private def createErrorMessage(status: Int, message: String,
                                  details: Seq[ErrorDetail] = Nil): JsValue = {
     Json.toJson(ErrorMessage(status, errorTypeForStatus(status), message, details, baseUri))
   }
 
+  /**
+   * Creates error details to be added to the error message
+   */
   private def createErrorDetail(fieldOpt: Option[String], `type`: String, message: String): ErrorDetail = {
     ErrorDetail(fieldOpt, `type`, message, baseUri)
   }

@@ -43,6 +43,9 @@ package com.sap.yaas.wishlist.model
 }
 
  */
+/**
+ * Case class for a list of WishlistItem objects
+ */
 case class WishlistItem(product: String,
   amount: Int,
   note: Option[String],

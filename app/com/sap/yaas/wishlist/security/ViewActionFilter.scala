@@ -17,6 +17,9 @@ import scala.concurrent.Future
 import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 
 
+/**
+ * Enforces necessity of wishlist_view scope if used in the desired endpoint
+ */
 object ViewActionFilter extends ActionFilter[YaasRequest] {
 
   def filter[A](input: YaasRequest[A]): Future[Option[Result]] = Future.successful {

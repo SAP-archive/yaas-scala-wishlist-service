@@ -20,6 +20,9 @@ import play.api.mvc._
 
 import scala.concurrent.{ ExecutionContext, Future }
 
+/**
+ * Global filter, that enforces use of Basic Auth if credentials are configured via env variable or application.conf
+ */
 class BasicAuthGlobalFilter @Inject() (config: Configuration)(implicit val mat: Materializer, ec: ExecutionContext) extends Filter {
 
   def apply(nextFilter: RequestHeader => Future[Result])(requestHeader: RequestHeader): Future[Result] = {

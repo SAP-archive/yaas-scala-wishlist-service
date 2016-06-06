@@ -27,6 +27,9 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import WSHelper._
 
+/**
+ * Client for accessing the OAuth2 service to request tokens for authenticated use of APIs.
+ */
 class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: ActorSystem)(
   implicit context: ExecutionContext) extends OAuthTokenProvider {
 
@@ -41,12 +44,24 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
       .onHalfOpen(notifyOnHalfOpen())
       .onOpen(notifyOnOpen())
 
+  /**
+   * Event endpoint for circuit breaker half open event
+   */
   def notifyOnHalfOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
 
+  /**
+   * Event endpoint for circuit breaker open event
+   */
   def notifyOnOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
+  /**
+   * Queries the OAuth2 service, requesting a new token with given scopes and credentials
+   * @param credentials to be used for the token request
+   * @param scope for the request token
+   * @return a Future[OAuthToken]
+   */
   def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken] = {
     import credentials._
     val hdrs = HeaderNames.CONTENT_TYPE -> ContentTypes.FORM
@@ -73,6 +88,11 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
         })
   }
 
+  /**
+   * UNIMPLEMENTED: Future implementation should cover invalidating tokens. Check in token acquisition if
+   * a token is about to expire and then rather request a new one and invalidate the old one, instead of
+   * providing the old one as result.
+   */
   def invalidateToken: Unit = ???
 
 }

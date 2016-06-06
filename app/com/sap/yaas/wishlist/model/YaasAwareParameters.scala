@@ -15,6 +15,9 @@ import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api.mvc.Request
 import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 
+/**
+ * Header propagation helper to make sure the SAP Hybris required headers are properly passed and set
+ */
 case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
                                hybrisScopes: String,
                                hybrisUser: Option[String],

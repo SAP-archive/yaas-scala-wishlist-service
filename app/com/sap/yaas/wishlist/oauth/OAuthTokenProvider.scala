@@ -16,6 +16,9 @@ import com.sap.yaas.wishlist.security.Credentials
 
 import scala.concurrent.Future
 
+/**
+ * Interface for Token acquisition
+ */
 trait OAuthTokenProvider {
   def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken]
 

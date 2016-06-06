@@ -11,6 +11,9 @@
  */
 package com.sap.yaas.wishlist.util
 
+/**
+ * Headers used in the YaasAwareParameter
+ */
 trait YaasAwareHeaders {
 
   val HYBRIS_TENANT: String = "hybris-tenant"
