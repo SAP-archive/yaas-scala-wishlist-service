@@ -13,7 +13,7 @@ package com.sap.yaas.wishlist.model
 
 import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api.mvc.Request
-import com.sap.yaas.wishlist.util.YaasAwareHeaders._
+import com.sap.yaas.wishlist.util.YaasHeaders._
 
 /**
  * Header propagation helper to make sure the SAP Hybris required headers are properly passed and set
@@ -26,8 +26,8 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
   val asSeq: Seq[(String, String)] = Seq(HYBRIS_TENANT -> hybrisTenant,
     HYBRIS_CLIENT -> hybrisClient,
     HYBRIS_HOP -> hybrisHop.toString) ++
-    (if (!hybrisUser.isEmpty) Seq(HYBRIS_USER -> hybrisUser.get) else Seq()) ++
-    (if (!hybrisRequestId.isEmpty) Seq(HYBRIS_REQUEST_ID -> hybrisRequestId.get) else Seq())
+    (if (hybrisUser.isDefined) Seq(HYBRIS_USER -> hybrisUser.get) else Seq()) ++
+    (if (hybrisRequestId.isDefined) Seq(HYBRIS_REQUEST_ID -> hybrisRequestId.get) else Seq())
 }
 
 object YaasAwareParameters {

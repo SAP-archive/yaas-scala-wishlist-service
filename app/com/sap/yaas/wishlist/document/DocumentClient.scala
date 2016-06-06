@@ -60,7 +60,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
    * Document service endpoint to get a collection of type wishlist
    * @param token access_token to be used in the request
    * @param pageNumber (optional, default=1) of the page you want to retrieve
-   * @param pageSize (optional, default=16) of the pages you want to view 
+   * @param pageSize (optional, default=16) of the pages you want to view
    * @return a Future[Wishlists]
    */
   def getAll(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
@@ -97,7 +97,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
    * Document service endpoint to create an object of type wishlist
    * @param wishlist an object of type wishlist to create in document repository
    * @param token access_token to be used in the request
-   * @return a Future[ResourceLocation] 
+   * @return a Future[ResourceLocation]
    */
   def create(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
     val path = List(config.getString("yaas.document.url").get,

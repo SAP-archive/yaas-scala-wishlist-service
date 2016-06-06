@@ -14,7 +14,7 @@ package com.sap.yaas.wishlist.security
 import play.api.mvc._
 
 import scala.concurrent.Future
-import com.sap.yaas.wishlist.util.YaasAwareHeaders._
+import com.sap.yaas.wishlist.util.YaasHeaders._
 
 
 /**
