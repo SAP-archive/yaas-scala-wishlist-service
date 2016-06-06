@@ -15,10 +15,11 @@ import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
+import com.sap.yaas.wishlist.document.DocumentClient._
 import com.sap.yaas.wishlist.model.Wishlist._
 import com.sap.yaas.wishlist.model._
 import com.sap.yaas.wishlist.util.WSHelper._
-import com.sap.yaas.wishlist.util.{CountableTrait, PagedTrait, WSHelper, YaasLogger}
+import com.sap.yaas.wishlist.util.{CountableTrait, PagedTrait, YaasLogger}
 import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.http.Status._
@@ -29,8 +30,8 @@ import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
- * Document Service client, that handles calls to the document repository
- */
+  * Document Service client, that handles calls to the document repository
+  */
 class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
 
   val client: String = config.getString("yaas.client").get
@@ -45,30 +46,30 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       .onOpen(notifyOnOpen())
 
   /**
-   * Event endpoint for circuit breaker half open event
-   */
+    * Event endpoint for circuit breaker half open event
+    */
   def notifyOnHalfOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now half open, if the next call fails, it will be open again")
 
   /**
-   * Event endpoint for circuit breaker open event
-   */
+    * Event endpoint for circuit breaker open event
+    */
   def notifyOnOpen(): Unit =
     logger.getLogger.warn("CircuitBreaker is now open, and will not close for one minute")
 
   /**
-   * Document service endpoint to get a collection of type wishlist
-   * @param token access_token to be used in the request
-   * @param pageNumber (optional, default=1) of the page you want to retrieve
-   * @param pageSize (optional, default=16) of the pages you want to view
-   * @return a Future[Wishlists]
-   */
+    * Document service endpoint to get a collection of type wishlist
+    * @param token access_token to be used in the request
+    * @param pageNumber (optional, default=1) of the page you want to retrieve
+    * @param pageSize (optional, default=16) of the pages you want to view
+    * @return a Future[Wishlists]
+    */
   def getAll(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
             (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
-    val path = List(config.getString("yaas.document.url").get,
+    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
-      "data",
+      DATA_PATH,
       DocumentClient.WISHLIST_PATH).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
@@ -94,16 +95,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
   /**
-   * Document service endpoint to create an object of type wishlist
-   * @param wishlist an object of type wishlist to create in document repository
-   * @param token access_token to be used in the request
-   * @return a Future[ResourceLocation]
-   */
+    * Document service endpoint to create an object of type wishlist
+    * @param wishlist an object of type wishlist to create in document repository
+    * @param token access_token to be used in the request
+    * @return a Future[ResourceLocation]
+    */
   def create(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
-    val path = List(config.getString("yaas.document.url").get,
+    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
-      "data",
+      DATA_PATH,
       DocumentClient.WISHLIST_PATH,
       wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
@@ -117,16 +118,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
   /**
-   * Document service endpoint to get a single object of type wishlist by id
-   * @param wishlistId to retrieve
-   * @param token access_token to be used in the request
-   * @return Future[Wishlist]
-   */
+    * Document service endpoint to get a single object of type wishlist by id
+    * @param wishlistId to retrieve
+    * @param token access_token to be used in the request
+    * @return Future[Wishlist]
+    */
   def get(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
-    val path = List(config.getString("yaas.document.url").get,
+    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
-      "data",
+      DATA_PATH,
       DocumentClient.WISHLIST_PATH,
       wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
@@ -139,16 +140,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
   /**
-   * Document service endpoint to update a single object of type wishlist
-   * @param wishlist object to be updated
-   * @param token access_token to be used in the request
-   * @return Future[UpdateResource]
-   */
+    * Document service endpoint to update a single object of type wishlist
+    * @param wishlist object to be updated
+    * @param token access_token to be used in the request
+    * @return Future[UpdateResource]
+    */
   def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResource] = {
-    val path = List(config.getString("yaas.document.url").get,
+    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
-      "data",
+      DATA_PATH,
       DocumentClient.WISHLIST_PATH,
       wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
@@ -163,9 +164,9 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
   /**
-   * Helper method to check responses from document service and handle error responses in a central place
-   */
-  private def checkResponse[A : Format](response: WSResponse): A = {
+    * Helper method to check responses from document service and handle error responses in a central place
+    */
+  private def checkResponse[A: Format](response: WSResponse): A = {
     response.status match {
       case OK | CREATED =>
         response.json.validate[A] match {
@@ -178,16 +179,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
   /**
-   * Document service endpoint to delete a single object of type wishlist by id
-   * @param wishlistId of the object that should be deleted
-   * @param token access_token to be used in the request
-   * @return a Future[Unit] (NO CONTENT on success)
-   */
+    * Document service endpoint to delete a single object of type wishlist by id
+    * @param wishlistId of the object that should be deleted
+    * @param token access_token to be used in the request
+    * @return a Future[Unit] (NO CONTENT on success)
+    */
   def delete(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Unit] = {
-    val path = List(config.getString("yaas.document.url").get,
+    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
-      "data",
+      DATA_PATH,
       DocumentClient.WISHLIST_PATH,
       wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
@@ -205,9 +206,14 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   }
 
 }
+
 /**
- * Helper object to provide global vals
- */
+  * Helper object to provide global vals
+  */
 object DocumentClient {
   val WISHLIST_PATH: String = "wishlist"
+
+  val DATA_PATH: String = "data"
+
+  val YAAS_DOCUMENT_URL: String = "yaas.document.url"
 }

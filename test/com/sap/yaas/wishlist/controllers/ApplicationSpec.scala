@@ -102,6 +102,36 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         WireMock.equalToJson(wishlistJson.toString())))
     }
 
+    "update a wishlist in document service propagating the hybris-request-id" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+
+      stubFor(put(urlEqualTo(path))
+        .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
+        .willReturn(aResponse()
+          .withStatus(OK)
+          .withBody("""{"code" : "200","status" : "200","message" : "Operation succeeded"}"""))
+      )
+      val wishlistJson = Json.toJson(wishlist)
+      val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(
+          HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
+          HYBRIS_HOP -> TEST_HOP
+        )
+        .withBody(wishlistJson)
+
+      inside(route(app, request)) {
+        case Some(result) =>
+          status(result) mustBe OK
+      }
+      WireMock.verify(WireMock.putRequestedFor(WireMock.urlMatching(path)).withRequestBody(
+        WireMock.equalToJson(wishlistJson.toString()))
+        .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
+        .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
+        .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
+      )
+    }
+
     "return one wishlist by id forwarding the hybris-request-id" in {
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
 
@@ -112,20 +142,20 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
             .withHeader(CONTENT_TYPE_HEADER, JSON)
             .withBody(
               s"""{
-                |    "owner": "owner1",
-                |    "title": "title1",
-                |    "items": [
-                |        {
-                |            "product": "hybris mug",
-                |            "amount": 50
-                |        },
-                |        {
-                |            "product": "hybris hoodie",
-                |            "amount": 25
-                |        }
-                |    ],
-                |    "id": "$TEST_ID"
-                |}""".stripMargin('|'))
+                  |    "owner": "owner1",
+                  |    "title": "title1",
+                  |    "items": [
+                  |        {
+                  |            "product": "hybris mug",
+                  |            "amount": 50
+                  |        },
+                  |        {
+                  |            "product": "hybris hoodie",
+                  |            "amount": 25
+                  |        }
+                  |    ],
+                  |    "id": "$TEST_ID"
+                  |}""".stripMargin('|'))
         )
       )
       val request = FakeRequest(GET, WISHLIST_PATH + s"/$TEST_ID")
