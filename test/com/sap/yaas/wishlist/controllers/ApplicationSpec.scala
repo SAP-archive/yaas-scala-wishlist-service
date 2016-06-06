@@ -102,8 +102,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         WireMock.equalToJson(wishlistJson.toString())))
     }
 
-    "return all wishlists with paging" in {
-      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"
+    "return one wishlist by id forwarding the hybris-request-id" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
 
       stubFor(get(urlPathEqualTo(path))
         .withHeader(HeaderNames.AUTHORIZATION, containing(TEST_TOKEN))
@@ -111,37 +111,24 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           aResponse().withStatus(OK)
             .withHeader(CONTENT_TYPE_HEADER, JSON)
             .withBody(
-              """[
-                |    {
-                |        "owner": "owner1",
-                |        "title": "title1",
-                |        "items": [
-                |            {
-                |                "product": "hybris mug",
-                |                "amount": 50
-                |            },
-                |            {
-                |                "product": "hybris hoodie",
-                |                "amount": 25
-                |            }
-                |        ],
-                |        "id": "id1"
-                |    },
-                |    {
-                |        "owner": "owner2",
-                |        "title": "title2",
-                |        "items": [
-                |            {
-                |                "product": "hybris mug",
-                |                "amount": 10
-                |            }
-                |        ],
-                |        "id": "id2"
-                |    }
-                |]""".stripMargin('|'))
+              s"""{
+                |    "owner": "owner1",
+                |    "title": "title1",
+                |    "items": [
+                |        {
+                |            "product": "hybris mug",
+                |            "amount": 50
+                |        },
+                |        {
+                |            "product": "hybris hoodie",
+                |            "amount": 25
+                |        }
+                |    ],
+                |    "id": "$TEST_ID"
+                |}""".stripMargin('|'))
         )
       )
-      val request = FakeRequest(GET, WISHLIST_PATH + s"?pageSize=2&pageNumber=3&totalCount=true")
+      val request = FakeRequest(GET, WISHLIST_PATH + s"/$TEST_ID")
         .withHeaders(defaultHeaders: _*)
         .withHeaders(
           HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
@@ -152,30 +139,21 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         case Some(result) =>
           status(result) mustBe OK
           contentType(result) mustEqual Some(JSON)
-          val wishlists: Wishlists = Json.fromJson[Wishlists](contentAsJson(result)).get
-          wishlists.size mustBe 2
-          wishlists.head.id mustBe "id1"
-          wishlists.head.title mustBe "title1"
-          wishlists.head.owner mustBe "owner1"
-          wishlists.head.items.head.product mustBe "hybris mug"
-          wishlists.head.items.head.amount mustBe 50
-          wishlists.head.items(1).product mustBe "hybris hoodie"
-          wishlists.head.items(1).amount mustBe 25
-          wishlists(1).id mustBe "id2"
-          wishlists(1).title mustBe "title2"
-          wishlists(1).owner mustBe "owner2"
-          wishlists(1).items.head.product mustBe "hybris mug"
-          wishlists(1).items.head.amount mustBe 10
+          val wishlist: Wishlist = Json.fromJson[Wishlist](contentAsJson(result)).get
+          wishlist.id mustBe TEST_ID
+          wishlist.title mustBe "title1"
+          wishlist.owner mustBe "owner1"
+          wishlist.items.head.product mustBe "hybris mug"
+          wishlist.items.head.amount mustBe 50
+          wishlist.items(1).product mustBe "hybris hoodie"
+          wishlist.items(1).amount mustBe 25
       }
       WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathEqualTo(path))
         .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
         .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
         .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
         .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
-        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP))
-        .withQueryParam(PagedParameters.PAGE_SIZE, equalTo("2"))
-        .withQueryParam(PagedParameters.PAGE_NUMBER, equalTo("3"))
-        .withQueryParam(PagedParameters.TOTAL_COUNT, equalTo("true")))
+        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP)))
     }
 
     "return a conflict for an already existing wishlist" in {
