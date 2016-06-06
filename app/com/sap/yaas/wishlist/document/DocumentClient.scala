@@ -18,7 +18,7 @@ import akka.pattern.CircuitBreaker
 import com.sap.yaas.wishlist.model.Wishlist._
 import com.sap.yaas.wishlist.model._
 import com.sap.yaas.wishlist.util.WSHelper._
-import com.sap.yaas.wishlist.util.{WSHelper, YaasLogger}
+import com.sap.yaas.wishlist.util.{CountableTrait, PagedTrait, WSHelper, YaasLogger}
 import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.http.Status._
@@ -73,17 +73,17 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
       HeaderNames.AUTHORIZATION -> ("Bearer " + token)).withQueryString(
-      "totalCount" -> "true", "pageSize" -> pageSize.getOrElse(0).toString)
+      CountableTrait.TOTAL_COUNT -> "true", PagedTrait.PAGE_SIZE -> pageSize.getOrElse(0).toString)
 
     val futureResponse: Future[WSResponse] =
       breaker.withCircuitBreaker(failFast(pageNumber.fold(request)(
-        p => request.withQueryString("pageNumber" -> p.toString)).get))
+        p => request.withQueryString(PagedTrait.PAGE_NUMBER -> p.toString)).get))
 
     futureResponse map {
       response =>
         response.status match {
           case OK =>
-            val totalCount = response.header("hybris-count").getOrElse("")
+            val totalCount = response.header(CountableTrait.HYBRIS_COUNT).getOrElse("")
             response.json.validate[Wishlists] match {
               case s: JsSuccess[Wishlists] => s.get
               case _ => throw new Exception("Could not parse result: " + response.json)

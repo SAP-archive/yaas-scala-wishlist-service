@@ -20,7 +20,7 @@ import com.sap.yaas.wishlist.controllers.ApplicationSpec._
 import com.sap.yaas.wishlist.model.Wishlist.Wishlists
 import com.sap.yaas.wishlist.model.{OAuthToken, ResourceLocation, Wishlist, WishlistItem}
 import com.sap.yaas.wishlist.util.YaasAwareHeaders._
-import com.sap.yaas.wishlist.util.{PagedParameters, YaasAwareHeaders}
+import com.sap.yaas.wishlist.util.{CountableTrait, PagedTrait, YaasAwareHeaders}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Inside._
 import org.scalatestplus.play._
@@ -154,6 +154,82 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
         .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
         .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP)))
+    }
+
+    "return all wishlists with paging" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"
+
+      stubFor(get(urlPathEqualTo(path))
+        .withHeader(HeaderNames.AUTHORIZATION, containing(TEST_TOKEN))
+        .willReturn(
+          aResponse().withStatus(OK)
+            .withHeader(CONTENT_TYPE_HEADER, JSON)
+            .withBody(
+              """[
+                |    {
+                |        "owner": "owner1",
+                |        "title": "title1",
+                |        "items": [
+                |            {
+                |                "product": "hybris mug",
+                |                "amount": 50
+                |            },
+                |            {
+                |                "product": "hybris hoodie",
+                |                "amount": 25
+                |            }
+                |        ],
+                |        "id": "id1"
+                |    },
+                |    {
+                |        "owner": "owner2",
+                |        "title": "title2",
+                |        "items": [
+                |            {
+                |                "product": "hybris mug",
+                |                "amount": 10
+                |            }
+                |        ],
+                |        "id": "id2"
+                |    }
+                |]""".stripMargin('|'))
+        )
+      )
+      val request = FakeRequest(GET, WISHLIST_PATH + s"?pageSize=2&pageNumber=3&totalCount=true")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(
+          HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
+          HYBRIS_HOP -> TEST_HOP
+        )
+
+      inside(route(app, request)) {
+        case Some(result) =>
+          status(result) mustBe OK
+          contentType(result) mustEqual Some(JSON)
+          val wishlists: Wishlists = Json.fromJson[Wishlists](contentAsJson(result)).get
+          wishlists.size mustBe 2
+          wishlists.head.id mustBe "id1"
+          wishlists.head.title mustBe "title1"
+          wishlists.head.owner mustBe "owner1"
+          wishlists.head.items.head.product mustBe "hybris mug"
+          wishlists.head.items.head.amount mustBe 50
+          wishlists.head.items(1).product mustBe "hybris hoodie"
+          wishlists.head.items(1).amount mustBe 25
+          wishlists(1).id mustBe "id2"
+          wishlists(1).title mustBe "title2"
+          wishlists(1).owner mustBe "owner2"
+          wishlists(1).items.head.product mustBe "hybris mug"
+          wishlists(1).items.head.amount mustBe 10
+      }
+      WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathEqualTo(path))
+        .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
+        .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
+        .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
+        .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
+        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP))
+        .withQueryParam(PagedTrait.PAGE_SIZE, equalTo("2"))
+        .withQueryParam(PagedTrait.PAGE_NUMBER, equalTo("3"))
+        .withQueryParam(CountableTrait.TOTAL_COUNT, equalTo("true")))
     }
 
     "return a conflict for an already existing wishlist" in {

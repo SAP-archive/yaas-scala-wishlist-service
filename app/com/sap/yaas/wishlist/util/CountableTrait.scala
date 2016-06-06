@@ -11,16 +11,13 @@
  */
 package com.sap.yaas.wishlist.util
 
-trait PagedParameters {
-
-  val PAGE_SIZE: String = "pageSize"
-
-  val PAGE_NUMBER: String = "pageNumber"
+trait CountableTrait {
 
   val TOTAL_COUNT: String = "totalCount"
 
+  val HYBRIS_COUNT: String = "hybris-count"
 
 }
 
-object PagedParameters extends scala.AnyRef with PagedParameters {
+object CountableTrait extends scala.AnyRef with CountableTrait {
 }
