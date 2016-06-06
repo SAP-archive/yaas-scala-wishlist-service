@@ -75,7 +75,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
         .withHeader(HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
         .withHeader(HYBRIS_HOP, equalTo(TEST_HOP))
-        .withHeader("Authorization", containing(TEST_TOKEN))
+        .withHeader(HeaderNames.AUTHORIZATION, containing(TEST_TOKEN))
         .willReturn(
           aResponse().withStatus(CREATED)
             .withHeader(CONTENT_TYPE_HEADER, JSON)

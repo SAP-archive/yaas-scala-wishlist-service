@@ -77,7 +77,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
 
     val futureResponse: Future[WSResponse] =
       breaker.withCircuitBreaker(failFast(pageNumber.fold(request)(
-        p => request.withQueryString("pageNumber" -> p.toString())).get))
+        p => request.withQueryString("pageNumber" -> p.toString)).get))
 
     futureResponse map {
       response =>
@@ -108,7 +108,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
-      .withHeaders("Authorization" -> ("Bearer " + token))
+      .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.post(Json.toJson(wishlist))))
     futureResponse map {
@@ -131,7 +131,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
-      .withHeaders("Authorization" -> ("Bearer " + token))
+      .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.get))
     futureResponse map {
       response => checkResponse[Wishlist](response)
@@ -153,7 +153,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       wishlist.id).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
-      .withHeaders("Authorization" -> ("Bearer " + token))
+      .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
     futureResponse map {
@@ -192,7 +192,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       wishlistId).mkString("/")
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
-      .withHeaders("Authorization" -> ("Bearer " + token))
+      .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.delete))
     futureResponse map {
       response =>
