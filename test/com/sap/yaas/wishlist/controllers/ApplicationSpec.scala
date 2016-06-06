@@ -17,14 +17,17 @@ import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
 import com.sap.yaas.wishlist.controllers.ApplicationSpec._
+import com.sap.yaas.wishlist.model.Wishlist.Wishlists
 import com.sap.yaas.wishlist.model.{OAuthToken, ResourceLocation, Wishlist, WishlistItem}
+import com.sap.yaas.wishlist.util.YaasAwareHeaders._
+import com.sap.yaas.wishlist.util.{PagedParameters, YaasAwareHeaders}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Inside._
 import org.scalatestplus.play._
+import play.api.http.HeaderNames
 import play.api.libs.json.{JsString, Json}
 import play.api.test.Helpers._
 import play.api.test._
-import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
@@ -99,6 +102,82 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         WireMock.equalToJson(wishlistJson.toString())))
     }
 
+    "return all wishlists with paging" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"
+
+      stubFor(get(urlPathEqualTo(path))
+        .withHeader(HeaderNames.AUTHORIZATION, containing(TEST_TOKEN))
+        .willReturn(
+          aResponse().withStatus(OK)
+            .withHeader(CONTENT_TYPE_HEADER, JSON)
+            .withBody(
+              """[
+                |    {
+                |        "owner": "owner1",
+                |        "title": "title1",
+                |        "items": [
+                |            {
+                |                "product": "hybris mug",
+                |                "amount": 50
+                |            },
+                |            {
+                |                "product": "hybris hoodie",
+                |                "amount": 25
+                |            }
+                |        ],
+                |        "id": "id1"
+                |    },
+                |    {
+                |        "owner": "owner2",
+                |        "title": "title2",
+                |        "items": [
+                |            {
+                |                "product": "hybris mug",
+                |                "amount": 10
+                |            }
+                |        ],
+                |        "id": "id2"
+                |    }
+                |]""".stripMargin('|'))
+        )
+      )
+      val request = FakeRequest(GET, WISHLIST_PATH + s"?pageSize=2&pageNumber=3&totalCount=true")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(
+          HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
+          HYBRIS_HOP -> TEST_HOP
+        )
+
+      inside(route(app, request)) {
+        case Some(result) =>
+          status(result) mustBe OK
+          contentType(result) mustEqual Some(JSON)
+          val wishlists: Wishlists = Json.fromJson[Wishlists](contentAsJson(result)).get
+          wishlists.size mustBe 2
+          wishlists.head.id mustBe "id1"
+          wishlists.head.title mustBe "title1"
+          wishlists.head.owner mustBe "owner1"
+          wishlists.head.items.head.product mustBe "hybris mug"
+          wishlists.head.items.head.amount mustBe 50
+          wishlists.head.items(1).product mustBe "hybris hoodie"
+          wishlists.head.items(1).amount mustBe 25
+          wishlists(1).id mustBe "id2"
+          wishlists(1).title mustBe "title2"
+          wishlists(1).owner mustBe "owner2"
+          wishlists(1).items.head.product mustBe "hybris mug"
+          wishlists(1).items.head.amount mustBe 10
+      }
+      WireMock.verify(WireMock.getRequestedFor(WireMock.urlPathEqualTo(path))
+        .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
+        .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
+        .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
+        .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
+        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP))
+        .withQueryParam(PagedParameters.PAGE_SIZE, equalTo("2"))
+        .withQueryParam(PagedParameters.PAGE_NUMBER, equalTo("3"))
+        .withQueryParam(PagedParameters.TOTAL_COUNT, equalTo("true")))
+    }
+
     "return a conflict for an already existing wishlist" in {
       stubFor(post(urlEqualTo(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"))
         .withHeader(CONTENT_TYPE_HEADER, containing(JSON))
@@ -154,22 +233,21 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           status(result) mustBe INTERNAL_SERVER_ERROR
       }
     }
-    
+
     "call document service multiple times, receiving 500s to open circuit" in {
       stubFor(get(urlPathMatching(s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist"))
-          .willReturn(
-              aResponse().withStatus(SERVICE_UNAVAILABLE)
-          )
+        .willReturn(
+          aResponse().withStatus(SERVICE_UNAVAILABLE)
+        )
       )
       val request = FakeRequest(GET, WISHLIST_PATH)
         .withHeaders(defaultHeaders: _*)
-      
+
       val max_failures = app.configuration.getInt("yaas.document.max_failures").get
       for (a <- 1 to (max_failures + 2)) {
         inside(route(app, request)) {
-          case Some(result) => {
+          case Some(result) =>
             status(result) mustBe INTERNAL_SERVER_ERROR
-          }
         }
       }
     }
