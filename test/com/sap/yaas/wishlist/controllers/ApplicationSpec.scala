@@ -26,8 +26,6 @@ import play.api.test.Helpers._
 import play.api.test._
 import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 
-// TODO: Test for circuit breaker to take effect
-
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
   val wishlistItem = new WishlistItem("product", 4, Some("note"), None)
@@ -170,21 +168,10 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       for (a <- 1 to (max_failures + 2)) {
         inside(route(app, request)) {
           case Some(result) => {
-            if(a < max_failures) {
-              status(result) mustBe INTERNAL_SERVER_ERROR
-              //message("Service Unavailable")
-            } else {
-              status(result) mustBe INTERNAL_SERVER_ERROR
-              //message("CircuitBreaker is now open, and will not close for one minute")
-            }
+            status(result) mustBe INTERNAL_SERVER_ERROR
           }
         }
       }
-            //for (a <- 1 to (max_failures + 2)) {
-                  //if (a <= max_failures)
-      //            else
-      //              status(result) mustBe INTERNAL_SERVER_ERROR
-      //}
     }
 
   }

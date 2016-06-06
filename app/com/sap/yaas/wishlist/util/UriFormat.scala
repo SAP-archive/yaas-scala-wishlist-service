@@ -26,6 +26,4 @@ object UriFormat {
   implicit val uriWrites = Writes {
     uri: java.net.URI => JsString(uri.toString)
   }
-
-  //implicit val uriFormat = Json.format[URI]
 }

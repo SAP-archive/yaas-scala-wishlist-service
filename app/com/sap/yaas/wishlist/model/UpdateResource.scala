@@ -15,8 +15,6 @@ import play.api.libs.json.Json
 
 case class UpdateResource(code: String, status: Option[String] = None, message: Option[String] = None, data: Option[String] = None)
 
-//TODO: Json format for java.net.URI
-
 object UpdateResource {
   implicit val UpdateResourceFormat = Json.format[UpdateResource]
 

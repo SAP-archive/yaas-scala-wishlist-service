@@ -26,7 +26,7 @@ object WSHelper {
     wsresponse.map(
       response =>
         response.status match {
-          /* fail ws request if we get a 503 */
+          /* fail ws request if we get any of the below status codes */
           case SERVICE_UNAVAILABLE | GATEWAY_TIMEOUT | INSUFFICIENT_STORAGE =>
             throw new Exception(response.statusText)
           case _ => response

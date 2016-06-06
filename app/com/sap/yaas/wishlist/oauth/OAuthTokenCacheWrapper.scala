@@ -37,7 +37,8 @@ class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
   }
 
   def invalidateToken: Unit = {
-
+    // this could be implemented in order to invalidate a token, when requested shortly
+    // before it's invalid, to prevent unauthorized requests.
   }
 }
 
