@@ -128,6 +128,36 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
         WireMock.equalToJson(wishlistJson.toString()))
         .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
         .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
+        .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
+        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP))
+        .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
+      )
+    }
+
+    "delete a wishlist in document service propagating the hybris-request-id" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+
+      stubFor(delete(urlEqualTo(path))
+        .willReturn(aResponse()
+          .withStatus(NO_CONTENT))
+      )
+      val wishlistJson = Json.toJson(wishlist)
+      val request = FakeRequest(DELETE, WISHLIST_PATH + s"/$TEST_ID")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(
+          HYBRIS_REQUEST_ID -> TEST_REQUEST_ID,
+          HYBRIS_HOP -> TEST_HOP
+        )
+
+      inside(route(app, request)) {
+        case Some(result) =>
+          status(result) mustBe NO_CONTENT
+      }
+      WireMock.verify(WireMock.deleteRequestedFor(WireMock.urlMatching(path))
+        .withHeader(YaasAwareHeaders.HYBRIS_CLIENT, equalTo(TEST_CLIENT))
+        .withHeader(YaasAwareHeaders.HYBRIS_TENANT, equalTo(TEST_TENANT))
+        .withHeader(YaasAwareHeaders.HYBRIS_REQUEST_ID, equalTo(TEST_REQUEST_ID))
+        .withHeader(YaasAwareHeaders.HYBRIS_HOP, equalTo(TEST_HOP))
         .withHeader(HeaderNames.AUTHORIZATION, equalTo(s"Bearer $TEST_TOKEN"))
       )
     }
