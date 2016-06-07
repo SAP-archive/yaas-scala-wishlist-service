@@ -11,8 +11,9 @@
  */
 package com.sap.yaas.wishlist.model
 
+import java.util.regex.Pattern
+
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.YaasAwareTrait.Headers._
-import com.sap.yaas.wishlist.service.ConstraintViolationException
 import play.api.mvc.Request
 
 /**
@@ -31,15 +32,38 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
 }
 
 object YaasAwareParameters {
+  private val DEFAULT_HOP = 1
+
   def apply[A](request: Request[A]): YaasAwareParameters = {
     new YaasAwareParameters(
-      request.headers.get(TENANT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
-      request.headers.get(CLIENT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
+      extractHeaderWithValidation(request, TENANT, TENANT_PATTERN),
+      extractHeaderWithValidation(request, CLIENT, CLIENT_PATTERN),
       request.headers.get(SCOPES).getOrElse(""),
       request.headers.get(USER),
       request.headers.get(REQUEST_ID),
-      request.headers.get(HOP).getOrElse("1").toInt)
+      extractIntHeader(request, HOP).getOrElse(DEFAULT_HOP))
   }
 
+  def extractHeaderWithValidation(request: Request[Any], headerName: String, pattern: Pattern): String = {
+    val header = request.headers.get(headerName)
+    if (header.isEmpty || header.get.trim.isEmpty) {
+      throw new MissingHeaderException(headerName)
+    } else if (!pattern.matcher(header.get).matches()) {
+      throw new MalformedHeaderException(headerName)
+    }
+    header.get
+  }
+
+  def extractIntHeader(request: Request[Any], headerName: String): Option[Int] = {
+    try {
+      request.headers.get(headerName).map(header => header.toInt)
+    } catch {
+      case e: NumberFormatException => throw new MalformedHeaderException(headerName)
+    }
+  }
 
 }
+
+class MissingHeaderException(val headerName: String) extends Exception
+
+class MalformedHeaderException(val headerName: String) extends Exception

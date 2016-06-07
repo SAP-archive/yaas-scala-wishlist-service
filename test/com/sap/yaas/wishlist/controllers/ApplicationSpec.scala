@@ -385,8 +385,8 @@ object ApplicationSpec {
 
   val WIREMOCK_PORT = 8089
 
-  val TEST_TENANT = "myTenant"
-  val TEST_CLIENT = "myClient"
+  val TEST_TENANT = "mytenant"
+  val TEST_CLIENT = "mytenant.myclient"
   val TEST_ID = "415-2"
   val TEST_LINK = "http://myLink.com"
   val TEST_REQUEST_ID = "516-3"
