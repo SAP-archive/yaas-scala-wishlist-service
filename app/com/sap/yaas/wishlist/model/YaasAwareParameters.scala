@@ -11,8 +11,8 @@
  */
 package com.sap.yaas.wishlist.model
 
+import com.sap.cloud.yaas.servicesdk.patternsupport.traits.YaasAwareTrait.Headers._
 import com.sap.yaas.wishlist.service.ConstraintViolationException
-import com.sap.yaas.wishlist.util.YaasAwareHeaders._
 import play.api.mvc.Request
 
 /**
@@ -23,21 +23,23 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
                                hybrisUser: Option[String],
                                hybrisRequestId: Option[String],
                                hybrisHop: Int = 1) {
-  val asSeq: Seq[(String, String)] = Seq(HYBRIS_TENANT -> hybrisTenant,
-    HYBRIS_CLIENT -> hybrisClient,
-    HYBRIS_HOP -> hybrisHop.toString) ++
-    (if (hybrisUser.isDefined) Seq(HYBRIS_USER -> hybrisUser.get) else Seq()) ++
-    (if (hybrisRequestId.isDefined) Seq(HYBRIS_REQUEST_ID -> hybrisRequestId.get) else Seq())
+  val asSeq: Seq[(String, String)] = Seq(TENANT -> hybrisTenant,
+    CLIENT -> hybrisClient,
+    HOP -> hybrisHop.toString) ++
+    (if (hybrisUser.isDefined) Seq(USER -> hybrisUser.get) else Seq()) ++
+    (if (hybrisRequestId.isDefined) Seq(REQUEST_ID -> hybrisRequestId.get) else Seq())
 }
 
 object YaasAwareParameters {
   def apply[A](request: Request[A]): YaasAwareParameters = {
     new YaasAwareParameters(
-      request.headers.get(HYBRIS_TENANT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
-      request.headers.get(HYBRIS_CLIENT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
-      request.headers.get(HYBRIS_SCOPES).getOrElse(""),
-      request.headers.get(HYBRIS_USER),
-      request.headers.get(HYBRIS_REQUEST_ID),
-      request.headers.get(HYBRIS_HOP).getOrElse("1").toInt)
+      request.headers.get(TENANT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
+      request.headers.get(CLIENT).getOrElse(throw new ConstraintViolationException(Seq.empty[(String, Seq[String])])),
+      request.headers.get(SCOPES).getOrElse(""),
+      request.headers.get(USER),
+      request.headers.get(REQUEST_ID),
+      request.headers.get(HOP).getOrElse("1").toInt)
   }
+
+
 }

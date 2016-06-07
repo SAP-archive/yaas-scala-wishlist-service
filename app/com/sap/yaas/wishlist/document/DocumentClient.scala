@@ -15,11 +15,12 @@ import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
+import com.sap.cloud.yaas.servicesdk.patternsupport.traits.{CountableTrait, PagedTrait}
 import com.sap.yaas.wishlist.document.DocumentClient._
 import com.sap.yaas.wishlist.model.Wishlist._
 import com.sap.yaas.wishlist.model._
 import com.sap.yaas.wishlist.util.WSHelper._
-import com.sap.yaas.wishlist.util.{CountableTrait, PagedTrait, YaasLogger}
+import com.sap.yaas.wishlist.util.YaasLogger
 import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.http.Status._
@@ -74,15 +75,16 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
       HeaderNames.AUTHORIZATION -> ("Bearer " + token)).withQueryString(
-      CountableTrait.TOTAL_COUNT -> "true", PagedTrait.PAGE_SIZE -> pageSize.getOrElse(0).toString)
+      CountableTrait.QueryParameters.TOTAL_COUNT -> "true",
+      PagedTrait.QueryParameters.PAGE_SIZE -> pageSize.getOrElse(0).toString)
 
     val futureResponse: Future[WSResponse] =
       breaker.withCircuitBreaker(failFast(pageNumber.fold(request)(
-        p => request.withQueryString(PagedTrait.PAGE_NUMBER -> p.toString)).get))
+        p => request.withQueryString(PagedTrait.QueryParameters.PAGE_NUMBER -> p.toString)).get))
 
     futureResponse map {
       response => (checkResponse[Wishlists](response).get,
-        response.header(CountableTrait.HYBRIS_COUNT))
+        response.header(CountableTrait.ResponseHeaders.COUNT))
     }
   }
 

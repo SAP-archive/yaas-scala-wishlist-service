@@ -12,13 +12,14 @@
 package com.sap.yaas.wishlist.controllers
 
 import com.google.inject.Inject
+import com.sap.cloud.yaas.servicesdk.patternsupport.traits.CountableTrait
 import com.sap.yaas.wishlist.controllers.Application._
 import com.sap.yaas.wishlist.document.DocumentClient
 import com.sap.yaas.wishlist.model.Wishlist
 import com.sap.yaas.wishlist.oauth.OAuthTokenCacheWrapper
 import com.sap.yaas.wishlist.security.{Credentials, YaasActions}
 import com.sap.yaas.wishlist.service.ConstraintViolationException
-import com.sap.yaas.wishlist.util.{CountableTrait, ErrorMapper, YaasLogger}
+import com.sap.yaas.wishlist.util.{ErrorMapper, YaasLogger}
 import play.api.Configuration
 import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
@@ -50,7 +51,7 @@ class Application @Inject()(documentClient: DocumentClient,
       token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_VIEW))
       result <- documentClient.getAll(token.access_token, pageNumber, pageSize).map { response =>
         Results.Ok(Json.toJson(response._1))
-          .withHeaders((CountableTrait.HYBRIS_COUNT, response._2.getOrElse("")))
+          .withHeaders((CountableTrait.ResponseHeaders.COUNT, response._2.getOrElse("")))
       }
     } yield result
   }

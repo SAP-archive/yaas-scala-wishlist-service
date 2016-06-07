@@ -10,7 +10,8 @@ val commonSettings = Seq(
   version := "1.0.0",
   scalaVersion := "2.11.8",
   libraryDependencies ++= Seq("org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-    "com.github.tomakehurst" % "wiremock" % "1.58" % Test),
+    "com.github.tomakehurst" % "wiremock" % "1.58" % Test,
+    "com.sap.cloud.yaas.service-sdk" % "service-sdk-pattern-support" % "4.7.0"),
   headers := Map(
     "scala" -> (
       HeaderPattern.cStyleBlockComment,
