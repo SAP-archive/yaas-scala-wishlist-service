@@ -17,13 +17,10 @@ import com.sap.cloud.yaas.servicesdk.patternsupport.traits.YaasAwareTrait.Header
 import play.api.mvc.Request
 
 /**
-  * Header propagation helper to make sure the SAP Hybris required headers are properly passed and set
+  * Encapsulates SAP Hybris required headers to make sure they are properly passed and set.
   */
-case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String,
-                               hybrisScopes: String,
-                               hybrisUser: Option[String],
-                               hybrisRequestId: Option[String],
-                               hybrisHop: Int = 1) {
+case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String, hybrisScopes: String,
+                               hybrisUser: Option[String], hybrisRequestId: Option[String], hybrisHop: Int) {
   val asSeq: Seq[(String, String)] = Seq(TENANT -> hybrisTenant,
     CLIENT -> hybrisClient,
     HOP -> hybrisHop.toString) ++

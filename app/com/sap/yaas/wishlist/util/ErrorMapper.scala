@@ -89,7 +89,7 @@ class ErrorMapper @Inject()(config: Configuration) {
       error._2.map(errorMessage =>
         createErrorDetail(Some(error._1), "validation_error", errorMessage)
       ))
-    createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
+    createErrorMessage(BAD_REQUEST, "Invalid arguments, see details for more info", "validation_violation", details)
   }
 
   /**

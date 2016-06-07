@@ -24,7 +24,7 @@ import play.filters.cors.CORSFilter
  */
 class Filters @Inject()(
                          basicAuthFilter: BasicAuthGlobalFilter,
-                         corsFilter: CORSFilter,
-                         wireLog: WireLog) extends HttpFilters {
-  val filters =  Seq(basicAuthFilter, corsFilter, wireLog)
+                         corsFilter: CORSFilter) extends HttpFilters {
+  // exclude WireLog since it cannot be used in production and causes issues with the ApiConsole
+  val filters =  Seq(basicAuthFilter, corsFilter)
 }
