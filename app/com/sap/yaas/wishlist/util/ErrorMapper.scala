@@ -152,12 +152,14 @@ class ErrorMapper @Inject()(config: Configuration) {
   /**
     * Creates error details to be added to the error message
     */
-  private def createErrorDetail(fieldOpt: Option[String], `type`: String, message: String): ErrorDetail = {
-    ErrorDetail(fieldOpt, `type`, message, baseUri)
+  private def createErrorDetail(fieldOpt: Option[String], errorType: String, message: String): ErrorDetail = {
+    ErrorDetail(fieldOpt, errorType, message, baseUri)
   }
 }
 
 object ErrorMapper {
-  val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
-  val TYPE_NOT_FOUND_ERROR = "not_found_error"
+
+  private val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
+
+  private val TYPE_NOT_FOUND_ERROR = "not_found_error"
 }
