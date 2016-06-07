@@ -22,10 +22,9 @@ import com.sap.yaas.wishlist.service.ConstraintViolationException
 import com.sap.yaas.wishlist.util.{ErrorMapper, YaasLogger}
 import play.api.Configuration
 import play.api.data.validation.ValidationError
-import play.api.i18n.{I18nSupport, Messages}
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
-import play.api.i18n.MessagesApi
 
 import scala.concurrent.{ExecutionContext, Future}
 
