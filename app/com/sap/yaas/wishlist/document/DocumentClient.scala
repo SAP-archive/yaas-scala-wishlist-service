@@ -65,12 +65,12 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @return a Future[Wishlists]
     */
   def getAll(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
-            (implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlists] = {
+            (implicit yaasAwareParameters: YaasAwareParameters): Future[(Wishlists, Option[String])] = {
     val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
-      DocumentClient.WISHLIST_PATH).mkString("/")
+      DocumentClient.WISHLIST_PATH).mkString(PATH_SEPARATOR)
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*).withHeaders(
       HeaderNames.AUTHORIZATION -> ("Bearer " + token)).withQueryString(
@@ -81,16 +81,8 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
         p => request.withQueryString(PagedTrait.PAGE_NUMBER -> p.toString)).get))
 
     futureResponse map {
-      response =>
-        response.status match {
-          case OK =>
-            val totalCount = response.header(CountableTrait.HYBRIS_COUNT).getOrElse("")
-            response.json.validate[Wishlists] match {
-              case s: JsSuccess[Wishlists] => s.get
-              case _ => throw new Exception("Could not parse result: " + response.json)
-            }
-          case _ => throw new Exception("Unexpected response status: " + response)
-        }
+      response => (checkResponse[Wishlists](response).get,
+        response.header(CountableTrait.HYBRIS_COUNT))
     }
   }
 
@@ -106,14 +98,14 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       client,
       DATA_PATH,
       DocumentClient.WISHLIST_PATH,
-      wishlist.id).mkString("/")
+      wishlist.id).mkString(PATH_SEPARATOR)
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.post(Json.toJson(wishlist))))
     futureResponse map {
-      response => checkResponse[ResourceLocation](response)
+      response => checkResponse[ResourceLocation](response).get
     }
   }
 
@@ -129,13 +121,13 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       client,
       DATA_PATH,
       DocumentClient.WISHLIST_PATH,
-      wishlistId).mkString("/")
+      wishlistId).mkString(PATH_SEPARATOR)
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.get))
     futureResponse map {
-      response => checkResponse[Wishlist](response)
+      response => checkResponse[Wishlist](response).get
     }
   }
 
@@ -151,7 +143,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       client,
       DATA_PATH,
       DocumentClient.WISHLIST_PATH,
-      wishlist.id).mkString("/")
+      wishlist.id).mkString(PATH_SEPARATOR)
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
@@ -159,22 +151,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
     futureResponse map {
       response =>
-        checkResponse[UpdateResource](response)
-    }
-  }
-
-  /**
-    * Helper method to check responses from document service and handle error responses in a central place
-    */
-  private def checkResponse[A: Format](response: WSResponse): A = {
-    response.status match {
-      case OK | CREATED =>
-        response.json.validate[A] match {
-          case s: JsSuccess[A] => s.get
-          case _ => throw new Exception("Could not parse result: " + response.json)
-        }
-      case CONFLICT => throw new DocumentExistsException("Wishlist exists")
-      case _ => throw new Exception("Unexpected response status: " + response)
+        checkResponse[UpdateResource](response).get
     }
   }
 
@@ -190,20 +167,34 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       client,
       DATA_PATH,
       DocumentClient.WISHLIST_PATH,
-      wishlistId).mkString("/")
+      wishlistId).mkString(PATH_SEPARATOR)
     val request: WSRequest = ws.url(path)
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.delete))
     futureResponse map {
-      response =>
-        response.status match {
-          case NO_CONTENT => ()
-          case NOT_FOUND => throw new NotFoundException("resource not found", path)
-          case _ => throw new Exception("Unexpected response status: " + response)
-        }
+      response => checkResponse(response)
     }
   }
+
+  /**
+    * Helper method to check responses from document service and handle error responses in a central place
+    */
+  private def checkResponse[A: Format](response: WSResponse): Option[A] = {
+    response.status match {
+      case OK | CREATED =>
+        response.json.validate[A] match {
+          case s: JsSuccess[A] => Some(s.get)
+          case _ => throw new Exception("Could not parse result: " + response.json)
+        }
+      case NOT_FOUND => throw new DocumentNotFoundException("resource not found")
+      case CONFLICT => throw new DocumentExistsException("Wishlist exists")
+      case NO_CONTENT => None
+      case _ => throw new Exception("Unexpected response status: " + response)
+    }
+  }
+
+  private def getAuthorizationHeader(token: String): String = s"$BEARER $token"
 
 }
 
@@ -211,9 +202,13 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
   * Helper object to provide global vals
   */
 object DocumentClient {
-  val WISHLIST_PATH: String = "wishlist"
+  private val WISHLIST_PATH: String = "wishlist"
 
-  val DATA_PATH: String = "data"
+  private val DATA_PATH: String = "data"
 
-  val YAAS_DOCUMENT_URL: String = "yaas.document.url"
+  private val YAAS_DOCUMENT_URL: String = "yaas.document.url"
+
+  private val PATH_SEPARATOR: String = "/"
+
+  private val BEARER = "Bearer"
 }

@@ -27,10 +27,10 @@ import play.api.mvc._
 import play.api.routing.Router
 
 import scala.concurrent._
-import com.sap.yaas.wishlist.document.NotFoundException
+import com.sap.yaas.wishlist.document.DocumentNotFoundException
 
 /**
- * Maps common status codes to exceptions
+ * Maps common status codes to exceptions.
  */
 class ErrorMapper @Inject()(config: Configuration) {
 
@@ -58,12 +58,12 @@ class ErrorMapper @Inject()(config: Configuration) {
       case e: UnauthorizedException => Unauthorized(createBody(e))
       case e: ForbiddenException => Forbidden(createBody(e))
       case e: ConstraintViolationException => BadRequest(createBody(e))
-      case e: NotFoundException => NotFound(createBody(e))
+      case e: DocumentNotFoundException => NotFound(createBody(e))
       case e: Exception => InternalServerError(createBody(e))
   }
 
   /**
-   * Maps a status code to an exception if handled by the mapper, otherwise maps it to internal server error
+   * Maps a status code to an exception if handled by the mapper, otherwise maps it to internal server error.
    */
   private def errorTypeForStatus(status: Int): String = {
     statusCodesToErrorTypeMap.getOrElse(status, ErrorMapper.TYPE_INTERNAL_SERVER_ERROR)
@@ -105,7 +105,7 @@ class ErrorMapper @Inject()(config: Configuration) {
   /**
    * Creates a message body for a not found exception
    */
-  private def createBody(exception: NotFoundException): JsValue = {
+  private def createBody(exception: DocumentNotFoundException): JsValue = {
     createErrorMessage(NOT_FOUND, "Requested resource is not available")
   }
 
