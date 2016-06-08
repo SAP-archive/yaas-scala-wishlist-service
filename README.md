@@ -17,7 +17,7 @@ Call ```activator run``` to start the service locally. In the ```application.con
 - Play Framework (RESTful web framework)
 - WireMock (Mock testing)
 - ScalaTest (Unit testing)
-- Akka Circuit Breaker (Play Frameworks-provided circuit breaker)
+- Akka Circuit Breaker (Circuit Breaker provided by the Play Framework)
 
 # Topics Demonstrated
 - Exposure of api.raml
