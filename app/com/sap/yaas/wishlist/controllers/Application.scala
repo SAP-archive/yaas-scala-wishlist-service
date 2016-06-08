@@ -39,7 +39,6 @@ class Application @Inject()(val messagesApi: MessagesApi, documentClient: Docume
     */
   def getAll(pageNumber: Option[Int], pageSize: Option[Int]): Action[AnyContent] = ViewAction.async { request =>
     implicit val yaasContext = request.yaasContext
-    logger.warn("Hello")
     for {
       token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_VIEW))
       result <- documentClient.getAll(token.access_token, pageNumber, pageSize).map { response =>

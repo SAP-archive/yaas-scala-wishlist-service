@@ -128,7 +128,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @param token access_token to be used in the request
     * @return Future[UpdateResource]
     */
-  def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResource] = {
+  def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResult] = {
     val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -142,7 +142,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
     futureResponse map {
       response =>
-        checkResponse[UpdateResource](response).get
+        checkResponse[UpdateResult](response).get
     }
   }
 
