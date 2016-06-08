@@ -1,14 +1,3 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
 package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
@@ -59,7 +48,7 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
   /**
    * Queries the OAuth2 service, requesting a new token with given scopes and credentials
    * @param credentials to be used for the token request
-   * @param scope for the request token
+   * @param scopes requested scopes for the request token
    * @return a Future[OAuthToken]
    */
   def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken] = {
@@ -88,16 +77,10 @@ class OAuthTokenService @Inject()(config: Configuration, ws: WSClient, system: A
         })
   }
 
-  /**
-   * UNIMPLEMENTED: Future implementation should cover invalidating tokens. Check in token acquisition if
-   * a token is about to expire and then rather request a new one and invalidate the old one, instead of
-   * providing the old one as result.
-   */
-  def invalidateToken: Unit = ???
-
 }
 
 object OAuthTokenService {
+
   val GRANT_TYPE = "client_credentials"
 
 }
