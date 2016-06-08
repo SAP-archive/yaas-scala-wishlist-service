@@ -6,9 +6,10 @@ import com.sap.cloud.yaas.wishlist.controllers.Application._
 import com.sap.cloud.yaas.wishlist.document.DocumentClient
 import com.sap.cloud.yaas.wishlist.model.Wishlist
 import com.sap.cloud.yaas.wishlist.oauth.OAuthTokenCacheWrapper
-import com.sap.cloud.yaas.wishlist.security.{Credentials, YaasActions}
-import com.sap.cloud.yaas.wishlist.service.ConstraintViolationException
-import com.sap.cloud.yaas.wishlist.util.{ErrorMapper, YaasLogger}
+import com.sap.cloud.yaas.wishlist.pipeline.YaasActions
+import com.sap.cloud.yaas.wishlist.security.Credentials
+import com.sap.cloud.yaas.wishlist.util.YaasLogger
+import com.sap.cloud.yaas.wishlist.validation.ConstraintViolationException
 import play.api.Configuration
 import play.api.data.validation.ValidationError
 import play.api.i18n.{I18nSupport, Messages, MessagesApi}
@@ -21,7 +22,7 @@ import scala.concurrent.{ExecutionContext, Future}
   * Main entry point, implementing our endpoints defined in the `routes` file
   */
 class Application @Inject()(val messagesApi: MessagesApi, documentClient: DocumentClient,
-                            oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
+                            oauthClient: OAuthTokenCacheWrapper,
                             config: Configuration, yaasActions: YaasActions)
                            (implicit context: ExecutionContext) extends Controller with I18nSupport {
 

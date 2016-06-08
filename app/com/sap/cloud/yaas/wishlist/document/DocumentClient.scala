@@ -5,6 +5,7 @@ import javax.inject.Inject
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.{CountableTrait, PagedTrait}
+import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
 import com.sap.cloud.yaas.wishlist.document.DocumentClient._
 import com.sap.cloud.yaas.wishlist.model.Wishlist._
 import com.sap.cloud.yaas.wishlist.model._

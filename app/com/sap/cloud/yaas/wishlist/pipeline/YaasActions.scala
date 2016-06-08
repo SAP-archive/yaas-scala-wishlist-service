@@ -1,9 +1,11 @@
-package com.sap.cloud.yaas.wishlist.security
+package com.sap.cloud.yaas.wishlist.pipeline
 
 import javax.inject.Inject
 
-import com.sap.cloud.yaas.wishlist.model.YaasAwareParameters
-import com.sap.cloud.yaas.wishlist.util.{ErrorMapper, YaasLogger}
+import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
+import com.sap.cloud.yaas.wishlist.mapper.ErrorMapper
+import com.sap.cloud.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter, YaasRequest}
+import com.sap.cloud.yaas.wishlist.util.YaasLogger
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}

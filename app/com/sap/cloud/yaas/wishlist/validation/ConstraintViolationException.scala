@@ -1,4 +1,4 @@
-package com.sap.cloud.yaas.wishlist.service
+package com.sap.cloud.yaas.wishlist.validation
 
 /**
  * Provides a constraint violation exception encapsulating validation details.

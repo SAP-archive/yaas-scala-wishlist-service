@@ -1,6 +1,6 @@
 package com.sap.cloud.yaas.wishlist.util
 
-import com.sap.cloud.yaas.wishlist.model.YaasAwareParameters
+import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
 import org.slf4j.{Logger, LoggerFactory, MDC}
 
 /**

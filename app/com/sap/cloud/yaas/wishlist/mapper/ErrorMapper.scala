@@ -1,12 +1,13 @@
-package com.sap.cloud.yaas.wishlist.util
+package com.sap.cloud.yaas.wishlist.mapper
 
 import java.net.URI
 import javax.inject._
 
+import com.sap.cloud.yaas.wishlist.context.{MalformedHeaderException, MissingHeaderException}
 import com.sap.cloud.yaas.wishlist.document.{DocumentExistsException, DocumentNotFoundException}
-import com.sap.cloud.yaas.wishlist.model.{ErrorDetail, ErrorMessage, MalformedHeaderException, MissingHeaderException}
+import com.sap.cloud.yaas.wishlist.model.{ErrorDetail, ErrorMessage}
 import com.sap.cloud.yaas.wishlist.security.{ForbiddenException, UnauthorizedException}
-import com.sap.cloud.yaas.wishlist.service.ConstraintViolationException
+import com.sap.cloud.yaas.wishlist.validation.ConstraintViolationException
 import play.api._
 import play.api.http.Status._
 import play.api.libs.json.{JsValue, Json}

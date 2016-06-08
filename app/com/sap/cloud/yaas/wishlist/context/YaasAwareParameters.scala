@@ -1,4 +1,4 @@
-package com.sap.cloud.yaas.wishlist.model
+package com.sap.cloud.yaas.wishlist.context
 
 import java.util.regex.Pattern
 
