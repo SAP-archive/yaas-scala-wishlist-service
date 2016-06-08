@@ -1,9 +1,6 @@
 import javax.inject.Inject
 
 import com.sap.yaas.wishlist.security.BasicAuthGlobalFilter
-import com.sap.yaas.wishlist.util.WireLog
-import play.Mode
-import play.api.Environment
 import play.api.http.HttpFilters
 import play.filters.cors.CORSFilter
 
@@ -14,6 +11,6 @@ import play.filters.cors.CORSFilter
 class Filters @Inject()(
                          basicAuthFilter: BasicAuthGlobalFilter,
                          corsFilter: CORSFilter) extends HttpFilters {
-  // exclude WireLog since it cannot be used in production and causes issues with the ApiConsole
+
   val filters =  Seq(basicAuthFilter, corsFilter)
 }

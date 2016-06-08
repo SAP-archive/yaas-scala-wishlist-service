@@ -50,6 +50,12 @@ object YaasAwareParameters {
 
 }
 
+/**
+  * Definition of an Exception thrown if a required header is missing.
+  */
 class MissingHeaderException(val headerName: String) extends Exception
 
+/**
+  * Definition of an Exception thrown if a required header is invalid.
+  */
 class MalformedHeaderException(val headerName: String) extends Exception
