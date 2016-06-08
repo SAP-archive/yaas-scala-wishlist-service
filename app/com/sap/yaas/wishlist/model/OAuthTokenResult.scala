@@ -12,7 +12,6 @@ case class OAuthToken(token_type: String, access_token: String, expires_in: Int,
  */
 case class OAuthTokenError(error: String, error_description: String, error_uri: String)
 
-// TODO: write mapper for camelCase variable names
 object OAuthToken {
   implicit val tokenFormat = Json.format[OAuthToken]
 }
