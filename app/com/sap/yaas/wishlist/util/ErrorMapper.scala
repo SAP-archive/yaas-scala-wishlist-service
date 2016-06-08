@@ -1,14 +1,3 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
 package com.sap.yaas.wishlist.util
 
 import java.net.URI
@@ -89,22 +78,22 @@ class ErrorMapper @Inject()(config: Configuration) {
       error._2.map(errorMessage =>
         createErrorDetail(Some(error._1), "validation_error", errorMessage)
       ))
-    createErrorMessage(BAD_REQUEST, "Invalid arguments", details)
+    createErrorMessage(BAD_REQUEST, "Invalid arguments, see details for more info", "validation_violation", details)
   }
 
   /**
     * Creates a message body for a forbidden exception
     */
   private def createBody(exception: ForbiddenException): JsValue = {
-    createErrorMessage(FORBIDDEN, "The client is not authorized to access this resource.. " +
-      s"Provided scope: ${exception.scope}, required scope in: ${exception.requiredScopeIn}")
+    createErrorMessage(FORBIDDEN, "The client is not authorized to access this resource. " +
+      s"Provided scope: ${exception.scope.getOrElse("")}, required scope any of: ${exception.requiredScopeIn}")
   }
 
   /**
     * Creates a message body for a not found exception
     */
   private def createBody(exception: DocumentNotFoundException): JsValue = {
-    createErrorMessage(NOT_FOUND, "Requested resource is not available")
+    createErrorMessage(NOT_FOUND, "The requested resource is not available.")
   }
 
   /**
@@ -152,12 +141,14 @@ class ErrorMapper @Inject()(config: Configuration) {
   /**
     * Creates error details to be added to the error message
     */
-  private def createErrorDetail(fieldOpt: Option[String], `type`: String, message: String): ErrorDetail = {
-    ErrorDetail(fieldOpt, `type`, message, baseUri)
+  private def createErrorDetail(fieldOpt: Option[String], errorType: String, message: String): ErrorDetail = {
+    ErrorDetail(fieldOpt, errorType, message, baseUri)
   }
 }
 
 object ErrorMapper {
-  val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
-  val TYPE_NOT_FOUND_ERROR = "not_found_error"
+
+  private val TYPE_INTERNAL_SERVER_ERROR = "internal_service_error"
+
+  private val TYPE_NOT_FOUND_ERROR = "not_found_error"
 }

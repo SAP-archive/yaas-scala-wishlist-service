@@ -1,14 +1,3 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
 package com.sap.yaas.wishlist.oauth
 
 import javax.inject.Inject
@@ -30,7 +19,7 @@ class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
    * Checks the cache if the needed token for this request might be already in cache, if so provide it to
    * the user. If not, request a new one and put it in the cache.
    * @param credentials to be used for the token request
-   * @param scope for the request token
+   * @param scopes requested scopes for the request token
    * @return a Future[OAuthToken]
    */
   def acquireToken(credentials: Credentials, scopes: Seq[String]): Future[OAuthToken] = {
@@ -51,7 +40,6 @@ class OAuthTokenCacheWrapper @Inject() (wrappedTokenService: OAuthTokenService,
    * a token is about to expire and then rather request a new one and invalidate the old one, instead of
    * providing the old one as result.
    */
-  def invalidateToken: Unit = ???
 }
 
 object OAuthTokenCacheWrapper {

@@ -1,14 +1,3 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
 package com.sap.yaas.wishlist.document
 
 import javax.inject.Inject
@@ -139,7 +128,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @param token access_token to be used in the request
     * @return Future[UpdateResource]
     */
-  def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResource] = {
+  def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResult] = {
     val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -153,7 +142,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
     futureResponse map {
       response =>
-        checkResponse[UpdateResource](response).get
+        checkResponse[UpdateResult](response).get
     }
   }
 

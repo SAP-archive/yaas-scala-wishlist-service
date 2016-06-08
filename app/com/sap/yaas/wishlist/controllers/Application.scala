@@ -1,14 +1,3 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
 package com.sap.yaas.wishlist.controllers
 
 import com.google.inject.Inject
@@ -21,6 +10,8 @@ import com.sap.yaas.wishlist.security.{Credentials, YaasActions}
 import com.sap.yaas.wishlist.service.ConstraintViolationException
 import com.sap.yaas.wishlist.util.{ErrorMapper, YaasLogger}
 import play.api.Configuration
+import play.api.data.validation.ValidationError
+import play.api.i18n.{I18nSupport, Messages, MessagesApi}
 import play.api.libs.json.{JsError, JsSuccess, Json, _}
 import play.api.mvc._
 
@@ -29,9 +20,10 @@ import scala.concurrent.{ExecutionContext, Future}
 /**
   * Main entry point, implementing our endpoints defined in the `routes` file
   */
-class Application @Inject()(documentClient: DocumentClient,
+class Application @Inject()(val messagesApi: MessagesApi, documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper, errorMapper: ErrorMapper,
-                            config: Configuration, yaasActions: YaasActions)(implicit context: ExecutionContext) extends Controller {
+                            config: Configuration, yaasActions: YaasActions)
+                           (implicit context: ExecutionContext) extends Controller with I18nSupport {
 
   val logger = YaasLogger(this.getClass)
 
@@ -72,7 +64,7 @@ class Application @Inject()(documentClient: DocumentClient,
             response => Ok(Json.toJson(response)))
         } yield result
       case JsError(errors) =>
-        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
+        Future.failed(convertToConstraintViolationException(errors))
     }
   }
 
@@ -92,7 +84,7 @@ class Application @Inject()(documentClient: DocumentClient,
             response => Ok(Json.toJson(response)))
         } yield result
       case JsError(errors) =>
-        Future.failed(new ConstraintViolationException(errors.map({ case (path, errlist) => (path.toString, errlist.map(_.message)) })))
+        Future.failed(convertToConstraintViolationException(errors))
     }
   }
 
@@ -123,6 +115,16 @@ class Application @Inject()(documentClient: DocumentClient,
         Ok(Json.toJson(response)))
     } yield result
   }
+
+  private def convertToConstraintViolationException(errors: Seq[(JsPath,
+    Seq[ValidationError])]): ConstraintViolationException = {
+    new ConstraintViolationException(errors.map({
+      case (path, errlist) => (path.toString, errlist.map(
+        error => Messages(error.message)
+      ))
+    }))
+  }
+
 }
 
 /**
