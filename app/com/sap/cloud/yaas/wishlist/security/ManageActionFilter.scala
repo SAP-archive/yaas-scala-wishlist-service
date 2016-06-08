@@ -1,6 +1,7 @@
 package com.sap.cloud.yaas.wishlist.security
 
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.YaasAwareTrait
+import com.sap.cloud.yaas.wishlist.context.YaasRequest
 import play.api.mvc._
 
 import scala.concurrent.Future

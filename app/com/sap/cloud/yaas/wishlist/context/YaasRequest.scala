@@ -1,6 +1,5 @@
-package com.sap.cloud.yaas.wishlist.security
+package com.sap.cloud.yaas.wishlist.context
 
-import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
 import play.api.mvc.{Request, WrappedRequest}
 
 /**

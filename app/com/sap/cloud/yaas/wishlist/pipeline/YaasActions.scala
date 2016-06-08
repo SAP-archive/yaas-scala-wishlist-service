@@ -2,9 +2,9 @@ package com.sap.cloud.yaas.wishlist.pipeline
 
 import javax.inject.Inject
 
-import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
+import com.sap.cloud.yaas.wishlist.context.{YaasRequest, YaasAwareParameters}
 import com.sap.cloud.yaas.wishlist.mapper.ErrorMapper
-import com.sap.cloud.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter, YaasRequest}
+import com.sap.cloud.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter}
 import com.sap.cloud.yaas.wishlist.util.YaasLogger
 import play.api.mvc._
 
@@ -41,7 +41,7 @@ class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionCont
           .append(System.lineSeparator()))
         log.info(buffer.toString())
       }
-      block(request).recover(errorMapper.mapError)
+      block(request)
     }
   }
 
