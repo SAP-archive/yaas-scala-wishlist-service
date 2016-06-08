@@ -1,12 +1,12 @@
 # Routes
 # This file defines all application routes (Higher priority routes first)
 # ~~~~
-GET         /wishlists                     com.sap.yaas.wishlist.controllers.Application.getAll(pageNumber: Option[Int] ?= None, pageSize: Option[Int] ?= None)
-POST        /wishlists                     com.sap.yaas.wishlist.controllers.Application.create()
+GET         /wishlists                     com.sap.cloud.yaas.wishlist.controllers.Application.getAll(pageNumber: Option[Int] ?= None, pageSize: Option[Int] ?= None)
+POST        /wishlists                     com.sap.cloud.yaas.wishlist.controllers.Application.create()
 
-GET         /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.get(wishlistId: String)
-PUT         /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.update(wishlistId: String)
-DELETE      /wishlists/:wishlistId         com.sap.yaas.wishlist.controllers.Application.delete(wishlistId: String)
+GET         /wishlists/:wishlistId         com.sap.cloud.yaas.wishlist.controllers.Application.get(wishlistId: String)
+PUT         /wishlists/:wishlistId         com.sap.cloud.yaas.wishlist.controllers.Application.update(wishlistId: String)
+DELETE      /wishlists/:wishlistId         com.sap.cloud.yaas.wishlist.controllers.Application.delete(wishlistId: String)
 
 GET         /*file                         controllers.Assets.at(path="/public", file)
 GET         /                              controllers.Default.redirect(to = "/api-console/index.html?raml=/meta-data/api.raml")

@@ -1,5 +1,5 @@
 import com.google.inject.Inject
-import com.sap.yaas.wishlist.util.ErrorMapper
+import com.sap.cloud.yaas.wishlist.util.ErrorMapper
 import play.api.http.HttpErrorHandler
 import play.api.mvc.Results._
 import play.api.mvc.{RequestHeader, Result}

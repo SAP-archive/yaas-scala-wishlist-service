@@ -1,6 +1,6 @@
 import javax.inject.Inject
 
-import com.sap.yaas.wishlist.security.BasicAuthGlobalFilter
+import com.sap.cloud.yaas.wishlist.security.BasicAuthGlobalFilter
 import play.api.http.HttpFilters
 import play.filters.cors.CORSFilter
 
