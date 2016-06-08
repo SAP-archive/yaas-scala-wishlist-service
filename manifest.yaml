@@ -3,4 +3,14 @@ applications:
 - name: scala-wishlist
   buildpack: java_buildpack
   path: ./target/universal/scala-wishlist-0.1.0-SNAPSHOT.zip
+  instances: 1
+  memory: 512M
+  disk: 512M
+  domain: us-east.internal.yaas.io
+  host: scala-wishlist-v1
+  env:
+    CLIENT_ID: U0ynf68kfsoGURq7njv23Kl9HGFKvfzz
+    CLIENT_SECRET: zYBb0gZDbvKyydOC
+    APP_NAME: scala-wishlist
+    APP_VERSION: 0.1.0-SNAPSHOT
   
