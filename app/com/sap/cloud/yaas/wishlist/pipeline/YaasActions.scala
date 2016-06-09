@@ -2,9 +2,9 @@ package com.sap.cloud.yaas.wishlist.pipeline
 
 import javax.inject.Inject
 
-import com.sap.cloud.yaas.wishlist.context.{YaasRequest, YaasAwareParameters}
+import com.sap.cloud.yaas.wishlist.context.{YaasAwareParameters, YaasRequest}
 import com.sap.cloud.yaas.wishlist.mapper.ErrorMapper
-import com.sap.cloud.yaas.wishlist.security.{ManageActionFilter, ViewActionFilter}
+import com.sap.cloud.yaas.wishlist.security.{BasicAuthActionFilter, ManageActionFilter, ViewActionFilter}
 import com.sap.cloud.yaas.wishlist.util.YaasLogger
 import play.api.mvc._
 
@@ -14,15 +14,15 @@ import scala.concurrent.{ExecutionContext, Future}
   * Holds a YaasAction that will extract Yaas headers from the Request, will add them to the result, and will also refine the
   * Request to be a YaasRequest that holds a context.
   */
-class YaasActions @Inject()(errorMapper: ErrorMapper)(implicit ec: ExecutionContext) {
+class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: BasicAuthActionFilter)(implicit ec: ExecutionContext) {
 
   val log = YaasLogger(this.getClass)
 
   val ManageAction = Action andThen YaasAction andThen LogActionBuilder andThen
-    ManageActionFilter andThen RecoverActionBuilder
+    basicAuthActionFilter andThen ManageActionFilter andThen RecoverActionBuilder
 
   val ViewAction = Action andThen YaasAction andThen LogActionBuilder andThen
-    ViewActionFilter andThen RecoverActionBuilder
+    basicAuthActionFilter andThen ViewActionFilter andThen RecoverActionBuilder
 
   private[this] object YaasAction extends ActionFunction[Request, YaasRequest] {
     def invokeBlock[A](request: Request[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
