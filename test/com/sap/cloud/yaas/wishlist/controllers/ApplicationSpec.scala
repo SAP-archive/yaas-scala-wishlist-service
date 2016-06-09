@@ -33,6 +33,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
   val wishlistInvalidItem = new WishlistItem("", 0, Some("note"), None)
   val wishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem))
   val invalidWishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem, wishlistInvalidItem))
+  val baseUri = "https://api.yaas.io/altocon/wishlist/v1"
 
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT))
@@ -364,6 +365,44 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       }
     }
 
+    "missing headers should results in a well formatted Bad Request" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+      val wishlistJson = Json.toJson(wishlist)
+      val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
+        .withHeaders(
+          YaasAwareTrait.Headers.REQUEST_ID -> TEST_REQUEST_ID,
+          YaasAwareTrait.Headers.HOP -> TEST_HOP
+        )
+        .withBody(wishlistJson)
+      inside(route(app, request)) {
+        case Some(result) =>
+          val contentJson = contentAsJson(result)
+          status(result) mustBe BAD_REQUEST
+          contentType(result) mustEqual Some(JSON)
+          (contentJson \ "type").get mustEqual JsString("missing_required_header")
+          (contentJson \ "message").get mustEqual JsString(
+            "Header 'hybris-tenant' is required but was not provided in the request.")
+          (contentJson \ "moreInfo").get mustEqual JsString(baseUri)
+      }
+    }
+
+    "invalid headers should results in a well formatted Bad Request" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+      val wishlistJson = Json.toJson(wishlist)
+      val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
+        .withHeaders(YaasAwareTrait.Headers.TENANT -> "1invalid")
+        .withBody(wishlistJson)
+      inside(route(app, request)) {
+        case Some(result) =>
+          val contentJson = contentAsJson(result)
+          status(result) mustBe BAD_REQUEST
+          contentType(result) mustEqual Some(JSON)
+          (contentJson \ "type").get mustEqual JsString("invalid_header")
+          (contentJson \ "message").get mustEqual JsString(
+            "One or more headers sent in the request have invalid format: hybris-tenant")
+          (contentJson \ "moreInfo").get mustEqual JsString(baseUri)
+      }
+    }
   }
 
   val defaultHeaders: Seq[(String, String)] = Seq(
@@ -392,5 +431,4 @@ object ApplicationSpec {
   val TEST_HOP = "4"
   val TEST_TOKEN = "token"
   val TEST_TOKEN_EXPIRY = 3600
-
 }

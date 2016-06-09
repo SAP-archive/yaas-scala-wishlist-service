@@ -9,24 +9,31 @@ import com.sap.cloud.yaas.wishlist.util.YaasLogger
 import play.api.mvc._
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.Try
 
 /**
   * Holds a YaasAction that will extract Yaas headers from the Request, will add them to the result, and will also refine the
   * Request to be a YaasRequest that holds a context.
   */
 class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: BasicAuthActionFilter)(implicit ec: ExecutionContext) {
-
   val log = YaasLogger(this.getClass)
 
-  val ManageAction = Action andThen YaasAction andThen LogActionBuilder andThen
-    basicAuthActionFilter andThen ManageActionFilter andThen RecoverActionBuilder
+  val ManageAction = Action andThen RecoverActionBuilder andThen
+    YaasAction andThen LogActionBuilder andThen
+    basicAuthActionFilter andThen ManageActionFilter
 
-  val ViewAction = Action andThen YaasAction andThen LogActionBuilder andThen
-    basicAuthActionFilter andThen ViewActionFilter andThen RecoverActionBuilder
+  val ViewAction = Action andThen RecoverActionBuilder andThen YaasAction andThen
+    LogActionBuilder andThen basicAuthActionFilter andThen ViewActionFilter
 
   private[this] object YaasAction extends ActionFunction[Request, YaasRequest] {
     def invokeBlock[A](request: Request[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
-      block(YaasRequest(YaasAwareParameters(request), request)).map(_.withHeaders(YaasAwareParameters(request).asSeq: _*))
+      Try(
+        block(YaasRequest(YaasAwareParameters(request), request)
+        ).map(
+          _.withHeaders(YaasAwareParameters(request).asSeq: _*))
+      ).recover {
+        case e: Exception => Future.failed(e)
+      }.get
   }
 
   private[this] object LogActionBuilder extends ActionFunction[YaasRequest, YaasRequest] {
@@ -45,9 +52,13 @@ class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: Bas
     }
   }
 
-  private[this] object RecoverActionBuilder extends ActionFunction[YaasRequest, YaasRequest] {
-    def invokeBlock[A](request: YaasRequest[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
-      block(request).recover(errorMapper.mapError)
+  private[this] object RecoverActionBuilder extends ActionFunction[Request, Request] {
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] =
+      Try(
+        block(request)
+      ).recover {
+        case e: Exception => Future.failed(e)
+      }.get.recover(errorMapper.mapError)
   }
 
 }
