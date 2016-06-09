@@ -84,7 +84,8 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @param token access_token to be used in the request
     * @return a Future[ResourceLocation]
     */
-  def create(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
+  def create(wishlist: Wishlist, token: String)
+            (implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
     val path = List(config.getString(YAAS_DOCUMENT_URL).get,
       yaasAwareParameters.hybrisTenant,
       client,
@@ -95,7 +96,8 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
       .withHeaders(yaasAwareParameters.asSeq: _*)
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     // timeout set by Play: play.ws.timeout.connection
-    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.post(Json.toJson(wishlist))))
+    val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(
+      failFast(request.post(Json.toJson(wishlist))))
     futureResponse map {
       response => checkResponse[ResourceLocation](response).get
     }
