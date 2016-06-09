@@ -60,5 +60,4 @@ class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: Bas
         case e: Exception => Future.failed(e)
       }.get.recover(errorMapper.mapError)
   }
-
 }
