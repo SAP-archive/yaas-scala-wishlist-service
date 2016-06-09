@@ -10,7 +10,7 @@ The implementation provides an endpoint for the [API Console](https://github.com
 The API's RAML file is exposed under [protocol]://[endpoint]:[port]/meta-data/api.raml. The default redirect of the root node loads the RAML file into the API Console.
 
 # How To Run
-Call ```activator run``` to start the service locally. In the ```application.conf``` configure your ```yaas.security.client_id``` and ```yaas.security.client_secret``` or pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET```, for use in the application.
+After installing Play, call ```activator run``` to start the service locally. In the ```application.conf``` configure your ```yaas.security.client_id``` and ```yaas.security.client_secret``` or pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET```, for use in the application.
 
 # Used Technology
 - SBT (build system)
