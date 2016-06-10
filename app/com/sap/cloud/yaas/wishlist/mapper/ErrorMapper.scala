@@ -3,6 +3,7 @@ package com.sap.cloud.yaas.wishlist.mapper
 import java.net.URI
 import javax.inject._
 
+import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.context.{MalformedHeaderException, MissingHeaderException}
 import com.sap.cloud.yaas.wishlist.document.{DocumentExistsException, DocumentNotFoundException}
 import com.sap.cloud.yaas.wishlist.model.{ErrorDetail, ErrorMessage}
@@ -17,7 +18,7 @@ import play.api.mvc._
 /**
   * Maps common status codes to exceptions.
   */
-class ErrorMapper @Inject()(config: Configuration) {
+class ErrorMapper @Inject()(config: Config) {
 
   private val statusCodesToErrorTypeMap = Map(
     400 -> "bad_payload_syntax",
@@ -34,9 +35,7 @@ class ErrorMapper @Inject()(config: Configuration) {
     503 -> "service_temporarily_unavailable"
   )
 
-  private val baseUri: URI = {
-    new URI(config.getString("yaas.base_url").get)
-  }
+  private val baseUri: URI = new URI(config.baseUri)
 
   val mapError: PartialFunction[Throwable, Result] = {
     case e: DocumentExistsException => Conflict(createBody(e))

@@ -2,6 +2,7 @@ package com.sap.cloud.yaas.wishlist.controllers
 
 import com.google.inject.Inject
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.CountableTrait
+import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.controllers.Application._
 import com.sap.cloud.yaas.wishlist.document.DocumentClient
 import com.sap.cloud.yaas.wishlist.model.Wishlist
@@ -23,12 +24,12 @@ import scala.concurrent.{ExecutionContext, Future}
   */
 class Application @Inject()(val messagesApi: MessagesApi, documentClient: DocumentClient,
                             oauthClient: OAuthTokenCacheWrapper,
-                            config: Configuration, yaasActions: YaasActions)
+                            config: Config, yaasActions: YaasActions)
                            (implicit context: ExecutionContext) extends Controller with I18nSupport {
 
   val logger = YaasLogger(this.getClass)
 
-  val credentials = Credentials(config.getString("yaas.security.client_id").get, config.getString("yaas.security.client_secret").get)
+  val credentials = config.credentials
 
   import yaasActions._
 
@@ -79,6 +80,10 @@ class Application @Inject()(val messagesApi: MessagesApi, documentClient: Docume
     request.body.validate[Wishlist] match {
       case JsSuccess(jsonWishlist, _) =>
         logger.debug("wishlist item: " + jsonWishlist)
+        if (!wishlistId.equals(jsonWishlist.id)) {
+          throw new ConstraintViolationException(Seq(("id",
+            Seq("Different wishlist ids in path and json are not allowed."))))
+        }
         for {
           token <- oauthClient.acquireToken(credentials, Seq(SCOPE_DOCUMENT_MANAGE))
           result <- documentClient.update(jsonWishlist, token.access_token).map(

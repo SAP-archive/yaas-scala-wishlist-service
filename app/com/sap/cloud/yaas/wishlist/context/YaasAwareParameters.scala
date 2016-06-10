@@ -5,6 +5,8 @@ import java.util.regex.Pattern
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.YaasAwareTrait.Headers._
 import play.api.mvc.Request
 
+import scala.util.Try
+
 /**
   * Encapsulates SAP Hybris required headers to make sure they are properly passed and set.
   */
@@ -13,8 +15,8 @@ case class YaasAwareParameters(hybrisTenant: String, hybrisClient: String, hybri
   val asSeq: Seq[(String, String)] = Seq(TENANT -> hybrisTenant,
     CLIENT -> hybrisClient,
     HOP -> hybrisHop.toString) ++
-    (if (hybrisUser.isDefined) Seq(USER -> hybrisUser.get) else Seq()) ++
-    (if (hybrisRequestId.isDefined) Seq(REQUEST_ID -> hybrisRequestId.get) else Seq())
+    hybrisUser.fold(Seq.empty[(String, String)])(s => Seq(USER -> s)) ++
+    hybrisRequestId.fold(Seq.empty[(String, String)])(s => Seq(REQUEST_ID -> s))
 }
 
 object YaasAwareParameters {
@@ -32,22 +34,23 @@ object YaasAwareParameters {
 
   def extractHeaderWithValidation(request: Request[Any], headerName: String, pattern: Pattern): String = {
     val header = request.headers.get(headerName)
-    if (header.isEmpty || header.get.trim.isEmpty) {
+    header.filterNot(_.trim.isEmpty).fold(
       throw new MissingHeaderException(headerName)
-    } else if (!pattern.matcher(header.get).matches()) {
-      throw new MalformedHeaderException(headerName)
+    ) { value =>
+      if (!pattern.matcher(value).matches()) {
+        throw new MalformedHeaderException(headerName)
+      }
+      value
     }
-    header.get
   }
 
   def extractIntHeader(request: Request[Any], headerName: String): Option[Int] = {
-    try {
+    Try {
       request.headers.get(headerName).map(header => header.toInt)
-    } catch {
+    } recover {
       case e: NumberFormatException => throw new MalformedHeaderException(headerName)
-    }
+    } get
   }
-
 }
 
 /**

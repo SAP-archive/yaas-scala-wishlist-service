@@ -2,6 +2,8 @@ name := "scala-wishlist"
 
 version := "0.1.0-SNAPSHOT"
 
+scapegoatVersion := "1.1.0"
+
 val sdkVersion = "4.7.0"
 
 

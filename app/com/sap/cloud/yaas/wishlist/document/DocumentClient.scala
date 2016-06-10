@@ -5,34 +5,33 @@ import javax.inject.Inject
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.{CountableTrait, PagedTrait}
+import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.context.YaasAwareParameters
 import com.sap.cloud.yaas.wishlist.document.DocumentClient._
 import com.sap.cloud.yaas.wishlist.model.Wishlist._
 import com.sap.cloud.yaas.wishlist.model._
 import com.sap.cloud.yaas.wishlist.util.WSHelper._
 import com.sap.cloud.yaas.wishlist.util.YaasLogger
-import play.api.Configuration
 import play.api.http.HeaderNames
 import play.api.http.Status._
 import play.api.libs.json.{Format, JsSuccess, Json}
 import play.api.libs.ws._
 
-import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 
 /**
   * Document Service client, that handles calls to the document repository
   */
-class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: ActorSystem)(implicit context: ExecutionContext) {
+class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem)(implicit context: ExecutionContext) {
 
-  val client: String = config.getString("yaas.client").get
   val logger = YaasLogger(this.getClass)
+  val client: String = config.client
 
   val breaker =
     new CircuitBreaker(system.scheduler,
-      maxFailures = config.getInt("yaas.document.max_failures").get,
-      callTimeout = Duration(config.getMilliseconds("yaas.document.call_timeout").get, MILLISECONDS),
-      resetTimeout = Duration(config.getMilliseconds("yaas.document.reset_timeout").get, MILLISECONDS))
+      maxFailures = config.docMaxFailures,
+      callTimeout = config.docCallTimeout,
+      resetTimeout = config.docResetTimeout)
       .onHalfOpen(notifyOnHalfOpen())
       .onOpen(notifyOnOpen())
 
@@ -57,7 +56,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     */
   def getAll(token: String, pageNumber: Option[Int] = None, pageSize: Option[Int] = None)
             (implicit yaasAwareParameters: YaasAwareParameters): Future[(Wishlists, Option[String])] = {
-    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
+    val path = List(config.documentUrl,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
@@ -86,7 +85,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     */
   def create(wishlist: Wishlist, token: String)
             (implicit yaasAwareParameters: YaasAwareParameters): Future[ResourceLocation] = {
-    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
+    val path = List(config.documentUrl,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
@@ -110,7 +109,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @return Future[Wishlist]
     */
   def get(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Wishlist] = {
-    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
+    val path = List(config.documentUrl,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
@@ -132,7 +131,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @return Future[UpdateResource]
     */
   def update(wishlist: Wishlist, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[UpdateResult] = {
-    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
+    val path = List(config.documentUrl,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
@@ -156,7 +155,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Configuration, system: Acto
     * @return a Future[Unit] (NO CONTENT on success)
     */
   def delete(wishlistId: String, token: String)(implicit yaasAwareParameters: YaasAwareParameters): Future[Unit] = {
-    val path = List(config.getString(YAAS_DOCUMENT_URL).get,
+    val path = List(config.documentUrl,
       yaasAwareParameters.hybrisTenant,
       client,
       DATA_PATH,
@@ -199,8 +198,6 @@ object DocumentClient {
   private val WISHLIST_PATH: String = "wishlist"
 
   private val DATA_PATH: String = "data"
-
-  private val YAAS_DOCUMENT_URL: String = "yaas.document.url"
 
   private val PATH_SEPARATOR: String = "/"
 
