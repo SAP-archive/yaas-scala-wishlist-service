@@ -63,5 +63,4 @@ class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: Bas
       } get
     } recover errorMapper.mapError
   }
-
 }
