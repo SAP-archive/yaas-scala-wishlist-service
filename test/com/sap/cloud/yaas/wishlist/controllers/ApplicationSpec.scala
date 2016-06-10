@@ -29,11 +29,10 @@ import play.api.test._
 
 class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAll {
 
-  val wishlistItem = new WishlistItem("product", 4, Some("note"), None)
+  val wishlistItem = new WishlistItem("product", TEST_AMOUNT, Some("note"), None)
   val wishlistInvalidItem = new WishlistItem("", 0, Some("note"), None)
   val wishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem))
   val invalidWishlist = new Wishlist(TEST_ID, "owner", "title", List(wishlistItem, wishlistInvalidItem))
-  val baseUri = "https://api.yaas.io/altocon/wishlist/v1"
 
   val wireMockServer: WireMockServer = new WireMockServer(
     WireMockConfiguration.wireMockConfig().port(WIREMOCK_PORT))
@@ -383,7 +382,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           (contentJson \ "type").get mustEqual JsString("missing_required_header")
           (contentJson \ "message").get mustEqual JsString(
             "Header 'hybris-tenant' is required but was not provided in the request.")
-          (contentJson \ "moreInfo").get mustEqual JsString(baseUri)
+          (contentJson \ "moreInfo").get mustEqual JsString(BASE_URI)
       }
     }
 
@@ -437,7 +436,7 @@ object ApplicationSpec {
   val WISHLIST_PATH = "/wishlists"
   val BASIC_AUTH_CREDENTIALS = "BASIC_AUTH_CREDENTIALS"
   val AUTHORIZATION_BASIC = "Basic d2lzaGxpc3Q6dGVzdA=="
-
+  val BASE_URI = "https://api.yaas.io/altocon/wishlist/v1"
 
   val WIREMOCK_PORT = 8089
 
@@ -449,4 +448,5 @@ object ApplicationSpec {
   val TEST_HOP = "4"
   val TEST_TOKEN = "token"
   val TEST_TOKEN_EXPIRY = 3600
+  val TEST_AMOUNT = 4
 }
