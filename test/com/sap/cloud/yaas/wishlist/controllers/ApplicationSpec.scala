@@ -42,7 +42,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     val wiremockUrl = s"http://localhost:$WIREMOCK_PORT"
     sys.props ++= Map(YAAS_DOCUMENT_URL -> wiremockUrl,
       YAAS_SECURITY_OAUTH_URL -> wiremockUrl,
-      YAAS_CLIENT -> TEST_CLIENT
+      YAAS_CLIENT -> TEST_CLIENT,
+      BASIC_AUTH_CREDENTIALS -> "wishlist:test"
     )
     wireMockServer.start()
     configureFor("localhost", WIREMOCK_PORT)
@@ -365,7 +366,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       }
     }
 
-    "missing headers should results in a well formatted Bad Request" in {
+    "missing required Yaas headers should result in a well formatted Bad Request" in {
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
       val wishlistJson = Json.toJson(wishlist)
       val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
@@ -386,21 +387,35 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       }
     }
 
-    "invalid headers should results in a well formatted Bad Request" in {
+    "invalid basic authorization header results in a 401 Unauthorized error" in {
       val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
       val wishlistJson = Json.toJson(wishlist)
       val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
-        .withHeaders(YaasAwareTrait.Headers.TENANT -> "1invalid")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(HeaderNames.AUTHORIZATION -> "Basic invalid")
         .withBody(wishlistJson)
       inside(route(app, request)) {
         case Some(result) =>
           val contentJson = contentAsJson(result)
-          status(result) mustBe BAD_REQUEST
+          status(result) mustBe UNAUTHORIZED
           contentType(result) mustEqual Some(JSON)
-          (contentJson \ "type").get mustEqual JsString("invalid_header")
-          (contentJson \ "message").get mustEqual JsString(
-            "One or more headers sent in the request have invalid format: hybris-tenant")
-          (contentJson \ "moreInfo").get mustEqual JsString(baseUri)
+          (contentJson \ "type").get mustEqual JsString("insufficient_credentials")
+      }
+    }
+
+    "invalid scope header results in a 403 Forbidden error" in {
+      val path = s"/$TEST_TENANT/$TEST_CLIENT/data/wishlist/$TEST_ID"
+      val wishlistJson = Json.toJson(wishlist)
+      val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
+        .withHeaders(defaultHeaders: _*)
+        .withHeaders(YaasAwareTrait.Headers.SCOPES -> "altocon.wishlist_view")
+        .withBody(wishlistJson)
+      inside(route(app, request)) {
+        case Some(result) =>
+          val contentJson = contentAsJson(result)
+          status(result) mustBe FORBIDDEN
+          contentType(result) mustEqual Some(JSON)
+          (contentJson \ "type").get mustEqual JsString("insufficient_permissions")
       }
     }
   }
@@ -409,7 +424,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     HeaderNames.CONTENT_TYPE -> MimeTypes.JSON,
     YaasAwareTrait.Headers.TENANT -> TEST_TENANT,
     YaasAwareTrait.Headers.CLIENT -> TEST_CLIENT,
-    YaasAwareTrait.Headers.SCOPES -> "altocon.wishlist_manage")
+    YaasAwareTrait.Headers.SCOPES -> "altocon.wishlist_manage",
+    HeaderNames.AUTHORIZATION -> AUTHORIZATION_BASIC)
 
 }
 
@@ -419,6 +435,8 @@ object ApplicationSpec {
   val YAAS_SECURITY_OAUTH_URL = "yaas.security.oauth_url"
   val YAAS_CLIENT = "yaas.client"
   val WISHLIST_PATH = "/wishlists"
+  val BASIC_AUTH_CREDENTIALS = "BASIC_AUTH_CREDENTIALS"
+  val AUTHORIZATION_BASIC = "Basic d2lzaGxpc3Q6dGVzdA=="
 
 
   val WIREMOCK_PORT = 8089
