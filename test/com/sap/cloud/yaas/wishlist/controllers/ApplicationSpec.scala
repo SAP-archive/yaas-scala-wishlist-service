@@ -15,6 +15,7 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration
+import com.sap.cloud.yaas.servicesdk.patternsupport.common.ErrorResponses
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.{CountableTrait, PagedTrait, YaasAwareTrait}
 import com.sap.cloud.yaas.wishlist.controllers.ApplicationSpec._
 import com.sap.cloud.yaas.wishlist.model.Wishlist.Wishlists
@@ -382,7 +383,8 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
           (contentJson \ "type").get mustEqual JsString("missing_required_header")
           (contentJson \ "message").get mustEqual JsString(
             "Header 'hybris-tenant' is required but was not provided in the request.")
-          (contentJson \ "moreInfo").get mustEqual JsString(BASE_URI)
+          (contentJson \ "moreInfo").get mustEqual JsString(
+            ErrorResponses.DOCUMENTATION_LINK.toString)
       }
     }
 

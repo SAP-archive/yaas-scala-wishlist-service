@@ -44,6 +44,7 @@ object YaasAwareParameters {
     }
   }
 
+  @SuppressWarnings(Array("TryGet"))
   def extractIntHeader(request: Request[Any], headerName: String): Option[Int] = {
     Try {
       request.headers.get(headerName).map(header => header.toInt)

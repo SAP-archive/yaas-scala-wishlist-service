@@ -72,7 +72,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem
         p => request.withQueryString(PagedTrait.QueryParameters.PAGE_NUMBER -> p.toString)).get))
 
     futureResponse map {
-      response => (checkResponse[Wishlists](response).get,
+      response => (checkResponse[Wishlists](response).getOrElse(unexpectedEmptyResponseError),
         response.header(CountableTrait.ResponseHeaders.COUNT))
     }
   }
@@ -98,7 +98,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(
       failFast(request.post(Json.toJson(wishlist))))
     futureResponse map {
-      response => checkResponse[ResourceLocation](response).get
+      response => checkResponse[ResourceLocation](response).getOrElse(unexpectedEmptyResponseError)
     }
   }
 
@@ -120,7 +120,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem
       .withHeaders(HeaderNames.AUTHORIZATION -> ("Bearer " + token))
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.get))
     futureResponse map {
-      response => checkResponse[Wishlist](response).get
+      response => checkResponse[Wishlist](response).getOrElse(unexpectedEmptyResponseError)
     }
   }
 
@@ -144,7 +144,7 @@ class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem
     val futureResponse: Future[WSResponse] = breaker.withCircuitBreaker(failFast(request.put(Json.toJson(wishlist))))
     futureResponse map {
       response =>
-        checkResponse[UpdateResult](response).get
+        checkResponse[UpdateResult](response).getOrElse(unexpectedEmptyResponseError)
     }
   }
 
@@ -188,6 +188,10 @@ class DocumentClient @Inject()(ws: WSClient, config: Config, system: ActorSystem
   }
 
   private def getAuthorizationHeader(token: String): String = s"$BEARER $token"
+
+  private def unexpectedEmptyResponseError: Nothing = {
+    throw new Exception("Unexpected empty response")
+  }
 
 }
 

@@ -1,9 +1,6 @@
 package com.sap.cloud.yaas.wishlist.mapper
 
-import java.net.URI
-import javax.inject._
-
-import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
+import com.sap.cloud.yaas.servicesdk.patternsupport.common.ErrorResponses
 import com.sap.cloud.yaas.wishlist.context.{MalformedHeaderException, MissingHeaderException}
 import com.sap.cloud.yaas.wishlist.document.{DocumentExistsException, DocumentNotFoundException}
 import com.sap.cloud.yaas.wishlist.model.{ErrorDetail, ErrorMessage}
@@ -18,7 +15,7 @@ import play.api.mvc._
 /**
   * Maps common status codes to exceptions.
   */
-class ErrorMapper @Inject()(config: Config) {
+class ErrorMapper {
 
   private val statusCodesToErrorTypeMap = Map(
     400 -> "bad_payload_syntax",
@@ -34,8 +31,6 @@ class ErrorMapper @Inject()(config: Config) {
     500 -> ErrorMapper.TYPE_INTERNAL_SERVER_ERROR,
     503 -> "service_temporarily_unavailable"
   )
-
-  private val baseUri: URI = new URI(config.baseUri)
 
   val mapError: PartialFunction[Throwable, Result] = {
     case e: DocumentExistsException => Conflict(createBody(e))
@@ -135,14 +130,14 @@ class ErrorMapper @Inject()(config: Config) {
     */
   private def createErrorMessage(status: Int, message: String, errorType: String,
                                  details: Seq[ErrorDetail]): JsValue = {
-    Json.toJson(ErrorMessage(status, errorType, message, details, baseUri))
+    Json.toJson(ErrorMessage(status, errorType, message, details, ErrorResponses.DOCUMENTATION_LINK))
   }
 
   /**
     * Creates error details to be added to the error message
     */
   private def createErrorDetail(fieldOpt: Option[String], errorType: String, message: String): ErrorDetail = {
-    ErrorDetail(fieldOpt, errorType, message, baseUri)
+    ErrorDetail(fieldOpt, errorType, message, ErrorResponses.DOCUMENTATION_LINK)
   }
 }
 

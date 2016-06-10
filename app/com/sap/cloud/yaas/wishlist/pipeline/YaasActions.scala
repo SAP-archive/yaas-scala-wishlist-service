@@ -25,15 +25,16 @@ class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: Bas
   val ViewAction = Action andThen RecoverActionBuilder andThen YaasAction andThen
     LogActionBuilder andThen basicAuthActionFilter andThen ViewActionFilter
 
+  @SuppressWarnings(Array("TryGet"))
   private[this] object YaasAction extends ActionFunction[Request, YaasRequest] {
     def invokeBlock[A](request: Request[A], block: (YaasRequest[A]) => Future[Result]): Future[Result] =
-      Try(
+      Try {
         block(YaasRequest(YaasAwareParameters(request), request)
         ).map(
           _.withHeaders(YaasAwareParameters(request).asSeq: _*))
-      ).recover {
+      } recover {
         case e: Exception => Future.failed(e)
-      }.get
+      } get
   }
 
   private[this] object LogActionBuilder extends ActionFunction[YaasRequest, YaasRequest] {
@@ -52,12 +53,15 @@ class YaasActions @Inject()(errorMapper: ErrorMapper, basicAuthActionFilter: Bas
     }
   }
 
+  @SuppressWarnings(Array("TryGet"))
   private[this] object RecoverActionBuilder extends ActionFunction[Request, Request] {
-    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] =
-      Try(
+    def invokeBlock[A](request: Request[A], block: (Request[A]) => Future[Result]): Future[Result] = {
+      Try {
         block(request)
-      ).recover {
+      } recover {
         case e: Exception => Future.failed(e)
-      }.get.recover(errorMapper.mapError)
+      } get
+    } recover errorMapper.mapError
   }
+
 }
