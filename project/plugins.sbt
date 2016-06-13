@@ -13,3 +13,6 @@ addSbtPlugin("org.scalastyle" %% "scalastyle-sbt-plugin" % "0.8.0")
 
 // Scapegoat
 addSbtPlugin("com.sksamuel.scapegoat" %% "sbt-scapegoat" % "1.0.4")
+
+// Scoverage
+addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
