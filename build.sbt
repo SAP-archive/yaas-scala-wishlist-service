@@ -6,6 +6,10 @@ scapegoatVersion := "1.2.1"
 
 val sdkVersion = "4.9.1"
 
+import de.johoop.findbugs4sbt.FindBugs._
+
+findbugsSettings
+
 val commonSettings = Seq(
   version := "1.0.0",
   scalaVersion := "2.11.8",

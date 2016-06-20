@@ -19,3 +19,6 @@ addSbtPlugin("org.scoverage" % "sbt-scoverage" % "1.3.5")
 
 // versioneye
 addSbtPlugin("com.versioneye" % "sbt-versioneye-plugin" % "0.2.0")
+
+// findbugs4sbt
+addSbtPlugin("de.johoop" % "findbugs4sbt" % "1.4.0")
