@@ -4,7 +4,7 @@ version := "0.1.0-SNAPSHOT"
 
 scapegoatVersion := "1.2.1"
 
-val sdkVersion = "4.9.1"
+val sdkVersion = "4.10.0"
 
 import de.johoop.findbugs4sbt.FindBugs._
 
