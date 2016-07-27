@@ -3,21 +3,23 @@ This is a wishlist service that implements the best practices for creating a Sca
 
 The implementation is based on the Scala [Play Framework](https://github.com/playframework/playframework) and uses [WireMock](http://wiremock.org/) and [ScalaTest](https://github.com/scalatest/scalatest) to ensure functionality.
 
+# How To Run
+You need to install the Play first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing). To access Yaas services, you need to setup a client using the builder first.  With this information, you can either configure the application either in ```application.conf``` providing ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Alternatively, you can pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET``` and ```$YAAS_CLIENT```.
+
+To start the service locally, you call ```activator run```.
+
 # API Console
-The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path [protocol]://[endpoint]:[port]/
+The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path, e.g. to try it locally you can use: http://localhost:9000
 
 # RAML File
-The API's RAML file is exposed under [protocol]://[endpoint]:[port]/meta-data/api.raml. The default redirect of the root node loads the RAML file into the API Console.
+The API's RAML file is exposed under the context path ```meta-data/api.raml```. To access it locally, you use http://localhost:9000/meta-data/api.raml. The default redirect of the root node loads the RAML file into the API Console.
 
-# How To Run
-After installing Play, call ```activator run``` to start the service locally. In the ```application.conf``` configure your ```yaas.security.client_id``` and ```yaas.security.client_secret``` or pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET```, for use in the application.
-
-# Used Technology
-- SBT (build system)
-- Play Framework (RESTful web framework)
-- WireMock (Mock testing)
-- ScalaTest (Unit testing)
-- Akka Circuit Breaker (Circuit Breaker provided by the Play Framework)
+# Incorporated Technology
+- SBT (build system, see http://www.scala-sbt.org/)
+- Play Framework (RESTful web framework, see https://www.playframework.com/)
+- WireMock (Mock testing, see http://wiremock.org/)
+- ScalaTest (Unit testing, see http://www.scalatest.org/)
+- Akka Circuit Breaker (Circuit Breaker provided by the Play Framework, see http://doc.akka.io/docs/akka/snapshot/common/circuitbreaker.html)
 
 # Topics Demonstrated
 - Exposure of api.raml

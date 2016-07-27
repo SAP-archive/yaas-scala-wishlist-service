@@ -1,15 +1,4 @@
-/*
- * [y] hybris Platform
- *
- * Copyright (c) 2000-2016 hybris AG
- * All rights reserved.
- *
- * This software is the confidential and proprietary information of hybris
- * ("Confidential Information"). You shall not disclose such Confidential
- * Information and shall use it only in accordance with the terms of the
- * license agreement you entered into with hybris.
- */
-package com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config
+package com.sap.cloud.yaas.wishlist.config
 
 import javax.inject.Inject
 
@@ -26,7 +15,7 @@ class Config @Inject()(config: Configuration) {
     getConfiguration("yaas.security.client_id"),
     getConfiguration("yaas.security.client_secret"))
 
-  val baseUri: String = getConfiguration("yaas.security.oauth_url")
+  val oauthUrl: String = getConfiguration("yaas.security.oauth_url")
 
   val documentUrl: String = getConfiguration("yaas.document.url")
 

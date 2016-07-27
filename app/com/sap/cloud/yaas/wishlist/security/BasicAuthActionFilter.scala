@@ -3,7 +3,7 @@ package com.sap.cloud.yaas.wishlist.security
 import java.nio.charset.StandardCharsets
 
 import com.google.inject.Inject
-import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
+import com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.context.YaasRequest
 import play.api.http.HeaderNames
 import play.api.mvc._

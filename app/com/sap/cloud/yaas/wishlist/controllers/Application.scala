@@ -2,7 +2,7 @@ package com.sap.cloud.yaas.wishlist.controllers
 
 import com.google.inject.Inject
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.CountableTrait
-import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
+import com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.controllers.Application._
 import com.sap.cloud.yaas.wishlist.document.DocumentClient
 import com.sap.cloud.yaas.wishlist.model.Wishlist

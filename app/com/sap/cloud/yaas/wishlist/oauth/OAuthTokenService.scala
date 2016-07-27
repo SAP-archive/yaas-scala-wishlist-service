@@ -4,7 +4,7 @@ import javax.inject.Inject
 
 import akka.actor.ActorSystem
 import akka.pattern.CircuitBreaker
-import com.sap.cloud.yaas.wishlist.com.sap.cloud.yaas.wishlist.config.Config
+import com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.model.{OAuthToken, OAuthTokenError}
 import com.sap.cloud.yaas.wishlist.security.Credentials
 import com.sap.cloud.yaas.wishlist.util.WSHelper._
@@ -22,7 +22,7 @@ class OAuthTokenService @Inject()(config: Config, ws: WSClient, system: ActorSys
   implicit context: ExecutionContext) extends OAuthTokenProvider {
 
   val logger = YaasLogger(this.getClass)
-  val baseUri = config.baseUri
+  val oauthUrl = config.oauthUrl
 
   val breaker =
     new CircuitBreaker(system.scheduler,
@@ -57,7 +57,7 @@ class OAuthTokenService @Inject()(config: Config, ws: WSClient, system: ActorSys
       "client_id" -> Seq(clientId),
       "client_secret" -> Seq(clientSecret),
       "scope" -> scopes)
-    breaker.withCircuitBreaker(failFast(ws.url(baseUri + "/token")
+    breaker.withCircuitBreaker(failFast(ws.url(oauthUrl + "/token")
       .withHeaders(hdrs)
       .post(body)))
       .map(

@@ -1,6 +1,6 @@
 #%RAML 0.8
 title: Wishlist Service
-baseUri: http://localhost/
+baseUri: http://localhost:9000/
 version: v1
 mediaType:  application/json
 
@@ -15,12 +15,12 @@ schemas:
   - wishlistMedia: !include schemas/wishlistMedia.json
   - wishlistMedias: !include schemas/wishlistMedias.json
 
-traits: 
+traits:
   - !include https://api.yaas.io/patterns/v2/trait-yaas-aware.yaml
   - !include https://api.yaas.io/patterns/v2/trait-paged.yaml
   - !include https://api.yaas.io/patterns/v1/trait-countable.yaml
 
-resourceTypes: 
+resourceTypes:
   - !include https://api.yaas.io/patterns/v2/resource-type-element.yaml
   - !include https://api.yaas.io/patterns/v1/resource-type-collection.yaml
 
