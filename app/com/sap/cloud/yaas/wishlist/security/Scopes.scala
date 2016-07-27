@@ -2,7 +2,7 @@ package com.sap.cloud.yaas.wishlist.security
 
 object Scopes {
 
-  val MANAGE_SCOPE = "altocon.wishlist_manage"
+  val MANAGE_SCOPE = "hybris.wishlist_manage"
 
-  val VIEW_SCOPE = "altocon.wishlist_view"
+  val VIEW_SCOPE = "hybris.wishlist_view"
 }

@@ -16,8 +16,7 @@ val commonSettings = Seq(
   libraryDependencies ++= Seq("org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
     "com.github.tomakehurst" % "wiremock" % "1.58" % Test,
     "com.sap.cloud.yaas.service-sdk" % "service-sdk-logging" % sdkVersion,
-    "com.sap.cloud.yaas.service-sdk" % "service-sdk-pattern-support" % sdkVersion,
-    "com.typesafe.play" %% "twirl-api" % "1.2.0"
+    "com.sap.cloud.yaas.service-sdk" % "service-sdk-pattern-support" % sdkVersion
   ),
   baseUrl in versioneye := "https://versioneye.hybris.com"
 )

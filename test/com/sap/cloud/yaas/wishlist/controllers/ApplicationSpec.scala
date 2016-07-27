@@ -20,6 +20,7 @@ import com.sap.cloud.yaas.servicesdk.patternsupport.traits.{CountableTrait, Page
 import com.sap.cloud.yaas.wishlist.controllers.ApplicationSpec._
 import com.sap.cloud.yaas.wishlist.model.Wishlist.Wishlists
 import com.sap.cloud.yaas.wishlist.model.{OAuthToken, ResourceLocation, Wishlist, WishlistItem}
+import com.sap.cloud.yaas.wishlist.security.Scopes
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.Inside._
 import org.scalatestplus.play._
@@ -409,7 +410,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
       val wishlistJson = Json.toJson(wishlist)
       val request = FakeRequest(PUT, WISHLIST_PATH + s"/$TEST_ID")
         .withHeaders(defaultHeaders: _*)
-        .withHeaders(YaasAwareTrait.Headers.SCOPES -> "altocon.wishlist_view")
+        .withHeaders(YaasAwareTrait.Headers.SCOPES -> Scopes.VIEW_SCOPE)
         .withBody(wishlistJson)
       inside(route(app, request)) {
         case Some(result) =>
@@ -425,7 +426,7 @@ class ApplicationSpec extends PlaySpec with OneAppPerSuite with BeforeAndAfterAl
     HeaderNames.CONTENT_TYPE -> MimeTypes.JSON,
     YaasAwareTrait.Headers.TENANT -> TEST_TENANT,
     YaasAwareTrait.Headers.CLIENT -> TEST_CLIENT,
-    YaasAwareTrait.Headers.SCOPES -> "altocon.wishlist_manage",
+    YaasAwareTrait.Headers.SCOPES -> Scopes.MANAGE_SCOPE,
     HeaderNames.AUTHORIZATION -> AUTHORIZATION_BASIC)
 
 }
@@ -438,7 +439,7 @@ object ApplicationSpec {
   val WISHLIST_PATH = "/wishlists"
   val BASIC_AUTH_CREDENTIALS = "BASIC_AUTH_CREDENTIALS"
   val AUTHORIZATION_BASIC = "Basic d2lzaGxpc3Q6dGVzdA=="
-  val BASE_URI = "https://api.yaas.io/altocon/wishlist/v1"
+  val BASE_URI = "https://api.yaas.io/hybris/wishlist/v1"
 
   val WIREMOCK_PORT = 8089
 
