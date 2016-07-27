@@ -4,15 +4,15 @@ This is a wishlist service that implements the best practices for creating a Sca
 The implementation is based on the Scala [Play Framework](https://github.com/playframework/playframework) and uses [WireMock](http://wiremock.org/) and [ScalaTest](https://github.com/scalatest/scalatest) to ensure functionality.
 
 # How To Run
-You need to install the Play first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing). To access Yaas services, you need to setup a client using the builder first.  With this information, you can either configure the application either in ```application.conf``` providing ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Alternatively, you can pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET``` and ```$YAAS_CLIENT```.
+You need to install the Play first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing). To access Yaas services, you need to setup a client using the builder first.  With this information, you can then either configure the application in ```application.conf```, providing values for ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Or alternatively, you can pass them as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET``` and ```$YAAS_CLIENT``` before running the application.
 
-To start the service locally, you call ```activator run```.
+To start the service locally, call ```activator run```.
 
 # API Console
-The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path, e.g. to try it locally you can use: http://localhost:9000
+The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path, e.g. to try it locally use: (http://localhost:9000)
 
 # RAML File
-The API's RAML file is exposed under the context path ```meta-data/api.raml```. To access it locally, you use http://localhost:9000/meta-data/api.raml. The default redirect of the root node loads the RAML file into the API Console.
+The API's RAML file is exposed under the context path ```meta-data/api.raml```. To access it locally, use (http://localhost:9000/meta-data/api.raml). The default redirect of the root node loads the RAML file into the API Console.
 
 # Incorporated Technology
 - SBT (build system, see http://www.scala-sbt.org/)
