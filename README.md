@@ -4,7 +4,9 @@ This is a wishlist service that implements the best practices for creating a Sca
 The implementation is based on the Scala [Play Framework](https://github.com/playframework/playframework) and uses [WireMock](http://wiremock.org/) and [ScalaTest](https://github.com/scalatest/scalatest) to ensure functionality.
 
 # How To Run
-You need to install the Play first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing). To access Yaas services, you need to setup a client using the builder first.  With this information, you can then either configure the application in ```application.conf```, providing values for ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Or alternatively, you can pass the configuration as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET``` and ```$YAAS_CLIENT``` before running the application.
+You need to install the Play first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing). 
+
+To access Yaas services, you need to setup a client using the builder first.  With this information, you can then either configure the application in ```application.conf```, providing values for ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Or alternatively, you can pass the configuration as environment variables ```$CLIENT_ID``` and ```$CLIENT_SECRET``` and ```$YAAS_CLIENT``` before running the application.
 
 To start the service locally, call ```activator run```.
 
