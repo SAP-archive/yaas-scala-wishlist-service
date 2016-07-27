@@ -9,10 +9,10 @@ You need to install the Play first using the Lightbend Activator as described he
 To start the service locally, call ```activator run```.
 
 # API Console
-The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path, e.g. to try it locally use: (http://localhost:9000)
+The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path, e.g. to try it locally use: [http://localhost:9000](http://localhost:9000)
 
 # RAML File
-The API's RAML file is exposed under the context path ```meta-data/api.raml```. To access it locally, use (http://localhost:9000/meta-data/api.raml). The default redirect of the root node loads the RAML file into the API Console.
+The API's RAML file is exposed under the context path ```meta-data/api.raml```. To access it locally, use [http://localhost:9000/meta-data/api.raml](http://localhost:9000/meta-data/api.raml). The default redirect loads the RAML file into the API Console.
 
 # Incorporated Technology
 - SBT (build system, see http://www.scala-sbt.org/)
