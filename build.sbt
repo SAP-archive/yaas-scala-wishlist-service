@@ -2,9 +2,9 @@ name := "scala-wishlist"
 
 version := "0.1.0-SNAPSHOT"
 
-scapegoatVersion := "1.2.1"
+scapegoatVersion := "1.3.0"
 
-val sdkVersion = "4.11.2"
+val sdkVersion = "4.13.6"
 
 import de.johoop.findbugs4sbt.FindBugs._
 
@@ -13,8 +13,8 @@ findbugsSettings
 val commonSettings = Seq(
   version := "1.0.0",
   scalaVersion := "2.11.8",
-  libraryDependencies ++= Seq("org.scalatestplus.play" %% "scalatestplus-play" % "1.5.1" % Test,
-    "com.github.tomakehurst" % "wiremock" % "2.3.1" % Test,
+  libraryDependencies ++= Seq("org.scalatestplus.play" %% "scalatestplus-play" % "2.0.0" % Test,
+    "com.github.tomakehurst" % "wiremock" % "2.5.1" % Test,
     "com.sap.cloud.yaas.service-sdk" % "service-sdk-logging" % sdkVersion,
     "com.sap.cloud.yaas.service-sdk" % "service-sdk-pattern-support" % sdkVersion
   ),
