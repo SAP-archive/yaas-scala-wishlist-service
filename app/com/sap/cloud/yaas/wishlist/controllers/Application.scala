@@ -1,6 +1,7 @@
 package com.sap.cloud.yaas.wishlist.controllers
 
 import com.google.inject.Inject
+
 import com.sap.cloud.yaas.servicesdk.patternsupport.traits.CountableTrait
 import com.sap.cloud.yaas.wishlist.config.Config
 import com.sap.cloud.yaas.wishlist.controllers.Application._
@@ -28,7 +29,7 @@ class Application @Inject()(val messagesApi: MessagesApi, documentClient: Docume
                            (implicit context: ExecutionContext) extends Controller with I18nSupport {
 
   val logger = YaasLogger(this.getClass)
-
+vla logger=test
   val credentials = config.credentials
 
   import yaasActions._
