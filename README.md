@@ -4,11 +4,11 @@ This is a wishlist service that implements the best practices for creating a Sca
 The implementation is based on the Scala [Play Framework](https://github.com/playframework/playframework) and uses [WireMock](http://wiremock.org/) and [ScalaTest](https://github.com/scalatest/scalatest) to ensure functionality.
 
 # How To Run
-You need to install the Play Framework first using the Lightbend Activator as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing).
+You need to install the Play Framework first as described here: [Installing Play](https://www.playframework.com/documentation/2.5.x/Installing).
 
 To access Yaas services, you need to setup a client using the [Builder](https://builder.yaas.io) first. The client needs to be subscribed to the Persistence package with the required scopes ```hybris.document_view``` and ```hybris.document_manage```.  With this information, you can then either configure the application in ```application.conf```, providing values for ```yaas.security.client_id```,  ```yaas.security.client_secret``` and ```yaas.client```. Or alternatively, you can pass the configuration as environment variables ```$CLIENT_ID```, ```$CLIENT_SECRET``` and ```$YAAS_CLIENT``` before running the application.
 
-To start the service locally, call ```activator run```.
+To start the service locally, call ```sbt run```.
 
 # API Console
 The implementation provides an endpoint for the [API Console](https://github.com/mulesoft/api-console) by Mulesoft, to which you are redirected when you access the root path. To try it locally, use [http://localhost:9000](http://localhost:9000).
