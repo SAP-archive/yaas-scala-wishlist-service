@@ -6,7 +6,7 @@ import play.api.libs.json.Json
 
 /**
  * Provides error detail information for a specific field.
- * Defined in https://api.yaas.io/patterns/v1/schema-error-message.json.
+ * Defined in https://pattern.yaas.io/v1/schema-error-message.json.
  */
 case class ErrorDetail(field: Option[String] = None, `type`: String, message: String,
   moreInfo: URI)

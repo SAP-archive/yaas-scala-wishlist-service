@@ -28,7 +28,7 @@ package com.sap.cloud.yaas.wishlist.model
     },
     "description":
     {
-        "$ref" : "https://api.yaas.io/patterns/v1/schema-localized.json"
+        "$ref" : "https://pattern.yaas.io/v1/schema-localized.json"
     },
     "createdAt":
     {
