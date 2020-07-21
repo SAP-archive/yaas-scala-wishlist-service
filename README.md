@@ -1,3 +1,8 @@
+![](https://img.shields.io/badge/STATUS-NOT%20CURRENTLY%20MAINTAINED-red.svg?longCache=true&style=flat)
+
+# Important Notice
+We have decided to stop the maintenance of this public GitHub repository.
+
 # Scala Wishlist
 This is a wishlist service that implements the best practices for creating a Scala-based YaaS service. The service allows the user to create wishlists, which can be viewed and managed. The output can be paginated via query parameters.
 
